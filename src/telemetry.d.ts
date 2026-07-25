@@ -103,9 +103,18 @@ export interface RunningApplicationItem {
   Count: number;
 }
 
+/**
+ * Health of the client's running-applications collector.
+ *
+ * NOTE: previously declared `'unsupported' | 'permission'`, neither of which the
+ * client ever emits — the real states are the four below, set by
+ * ProcessMonitor's `setStatus`/`classifyCollectionError`. The union was widened
+ * with `| string`, which stopped the mismatch from being visible.
+ */
+export type RunningApplicationsState = 'unknown' | 'ok' | 'error' | 'permission_denied';
+
 export interface RunningApplicationsStatus {
-  /** `'ok'` on success; otherwise a classified collection-error state. */
-  State: 'ok' | 'error' | 'unsupported' | 'permission' | string;
+  State: RunningApplicationsState;
   Message: string | null;
   Platform?: string;
 }
