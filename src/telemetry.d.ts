@@ -62,17 +62,40 @@ export interface ClientDisplay {
 }
 
 /**
+ * A single address bound to a network interface. Field names are lower-case
+ * because the client passes Node's `os.networkInterfaces()` entries through
+ * almost verbatim.
+ */
+export interface NetworkInterfaceAddress {
+  /** `'IPv4'`/`'IPv6'` on Node < 18; may be the number 4/6 on Node >= 18. */
+  family: string | number;
+  address: string;
+  /** Null when the OS did not report one (NetworkMonitor normalizes it away). */
+  netmask: string | null;
+  cidr: string | null;
+  /** Upper-cased by the client; null when the OS did not report one. */
+  mac: string | null;
+  internal: boolean;
+  scopeid: number | null;
+  /**
+   * Server-side annotation, not sent by the client: whether the address is
+   * currently live. Consumers fall back to inspecting `address` when absent.
+   */
+  active?: boolean;
+}
+
+/**
  * A network interface reported by the client's `NetworkInterfaces` event.
- * The concrete shape is refined as the network modules migrate; extra fields
- * are permitted for forward compatibility.
+ *
+ * NOTE: this previously declared PascalCase `Name`/`Address`/`MAC`/`Family`
+ * fields plus an index signature. Nothing ever emitted or read those — the
+ * client sends `{ name, addresses[] }` and the server's client-info modal reads
+ * `iface.name` / `iface.addresses[].address`. The index signature hid the
+ * mismatch; the shape below is what actually goes over the wire.
  */
 export interface NetworkInterface {
-  Name?: string;
-  Address?: string;
-  MAC?: string;
-  Family?: string;
-  Internal?: boolean;
-  [key: string]: unknown;
+  name: string;
+  addresses: NetworkInterfaceAddress[];
 }
 
 export interface RunningApplicationItem {
