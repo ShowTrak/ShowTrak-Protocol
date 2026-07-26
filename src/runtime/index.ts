@@ -13,3 +13,4 @@
 // parameterised by one app's identity or wired to its managers — that stays in
 // the app and takes what it needs as an argument.
 export * from './network-errors';
+export * from './checksum';
