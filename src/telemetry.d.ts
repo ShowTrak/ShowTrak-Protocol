@@ -129,3 +129,69 @@ export interface RunningApplicationsSnapshot {
   /** Present and `true` when the app set is unchanged (Items omitted). */
   NoChanges?: boolean;
 }
+
+// --- Incremental telemetry (deltas) ----------------------------------------
+//
+// The full-list events above remain the authority: they are sent on connect and
+// on a slow resync, and a server applies one by REPLACING its stored state. The
+// delta events below carry only what changed between two samples, so a change
+// can be reported the moment it is observed without resending an entire list.
+//
+// A delta is only ever emitted to a server that advertised `Deltas` in its
+// ServerCapabilities. Against an older server the client keeps sending a full
+// list on every change instead, so the feature degrades to the previous
+// behaviour rather than going silent.
+//
+// Deltas are never sent with `volatile`: a dropped delta would leave the server
+// silently wrong until the next resync, which is exactly what the full-list
+// authority is there to bound.
+
+/** Delta for the `NetworkInterfaceDelta` event. Interfaces are keyed by `name`. */
+export interface NetworkInterfaceDelta {
+  Added: NetworkInterface[];
+  /** Names of interfaces that disappeared. */
+  Removed: string[];
+  /** Interfaces still present whose address set changed. */
+  Changed: NetworkInterface[];
+}
+
+/** Delta for the `DisplayDelta` event. Displays are keyed by `DisplayID`. */
+export interface DisplayDelta {
+  Added: ClientDisplay[];
+  /** DisplayIDs of displays that disappeared. */
+  Removed: string[];
+  /** Displays still present whose reported configuration changed. */
+  Changed: ClientDisplay[];
+}
+
+/**
+ * Delta for the `ApplicationDelta` event. Applications are keyed by their
+ * case-insensitive name.
+ *
+ * The counters travel with the delta because the server's view reports them
+ * directly, and recomputing them from a partial list would be wrong.
+ */
+export interface ApplicationDelta {
+  Started: RunningApplicationItem[];
+  /** Names of applications that are no longer running. */
+  Stopped: string[];
+  /** Applications still running whose process count changed. */
+  Changed: RunningApplicationItem[];
+  SampledAt: number;
+  TotalCount: number;
+  Truncated: boolean;
+  Status: RunningApplicationsStatus;
+}
+
+/**
+ * What a server tells a client it understands, in reply to
+ * `GetServerCapabilities`.
+ *
+ * A server that predates this event never invokes the acknowledgement at all,
+ * which is the signal the client uses to stay on full lists — so the absence of
+ * a reply is meaningful and must not be given a default.
+ */
+export interface ServerCapabilities {
+  /** Whether the server accepts the `*Delta` events. */
+  Deltas: boolean;
+}

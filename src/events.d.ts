@@ -9,6 +9,10 @@ import type {
   ClientDisplay,
   NetworkInterface,
   RunningApplicationsSnapshot,
+  NetworkInterfaceDelta,
+  DisplayDelta,
+  ApplicationDelta,
+  ServerCapabilities,
 } from './telemetry';
 import type { AdoptionHeartbeatPayload, UnadoptPayload, IdentifyPayload } from './adoption';
 import type { IntegratedAction, IntegratedState } from './integrated';
@@ -34,6 +38,20 @@ export interface ClientToServerEvents {
   DisplayList: (displays: ClientDisplay[]) => void;
   NetworkInterfaces: (interfaces: NetworkInterface[]) => void;
   RunningApplications: (snapshot: RunningApplicationsSnapshot) => void;
+  /**
+   * Ask what the server understands. A server that predates this event never
+   * invokes the callback, which is how the client detects an older server and
+   * stays on full-list reporting.
+   */
+  GetServerCapabilities: (callback: (capabilities: ServerCapabilities) => void) => void;
+  /**
+   * Incremental telemetry. Only emitted once the server has advertised
+   * `Deltas`; the full-list events above stay authoritative and continue on
+   * connect and on the periodic resync.
+   */
+  NetworkInterfaceDelta: (delta: NetworkInterfaceDelta) => void;
+  DisplayDelta: (delta: DisplayDelta) => void;
+  ApplicationDelta: (delta: ApplicationDelta) => void;
   IdentifyStopped: () => void;
   ScriptExecutionResponse: (
     requestId: ExecutionRequestID,
