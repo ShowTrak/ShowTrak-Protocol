@@ -211,6 +211,11 @@ export interface ClientView {
   MissingCriticalUSBNames?: MissingCriticalUSBName[];
   Degraded?: boolean;
   DegradedWarnings?: string[];
+  /** Online, but inside its start-up window with a critical application, USB
+   *  device or display still unaccounted for. The machine is booting, so the
+   *  guard is held rather than reported as a fault: the tile reads "Starting
+   *  Up" instead of degraded, and no alert fires until the window closes. */
+  Initialising?: boolean;
   NetworkInterfaces?: NetworkInterface[];
   Integrated?: boolean;
   IntegratedActions?: IntegratedAction[];
