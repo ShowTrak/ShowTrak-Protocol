@@ -13,7 +13,13 @@
     "noEmit": false,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    // The base config sets `types: []` because the ambient protocol declarations
+    // must not depend on any environment. Runtime code does: it uses node:crypto,
+    // node:fs and Buffer. @types/node resolves from the consuming app's
+    // node_modules, which typeRoots finds by walking up from this directory —
+    // the submodule has no node_modules of its own and does not need one.
+    "types": ["node"]
   },
   "include": ["src/runtime/**/*.ts"]
 }
