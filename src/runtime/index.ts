@@ -14,3 +14,4 @@
 // the app and takes what it needs as an argument.
 export * from './network-errors';
 export * from './checksum';
+export * from './logging';
