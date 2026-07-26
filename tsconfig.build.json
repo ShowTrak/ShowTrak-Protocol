@@ -1,0 +1,19 @@
+{
+  // Emits the shared RUNTIME entry point (src/runtime -> dist/runtime).
+  //
+  // Separate from tsconfig.json, which typechecks the ambient .d.ts protocol
+  // declarations with noEmit. Those two jobs are genuinely different: the
+  // declarations are erased at build time and are consumed straight from source
+  // by both apps' tsconfig `paths`, whereas everything under src/runtime is real
+  // JavaScript that has to exist on disk for Node to require it.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src/runtime",
+    "outDir": "./dist/runtime",
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["src/runtime/**/*.ts"]
+}
