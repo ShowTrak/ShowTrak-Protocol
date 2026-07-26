@@ -30,7 +30,10 @@ export interface ChecksumErrorSink {
  * re-download", which is the safe direction, so a read failure resolves `null`
  * and reports through `onError` if one is supplied.
  */
-export function ChecksumFile(filePath: string, onError?: ChecksumErrorSink): Promise<string | null> {
+export function ChecksumFile(
+  filePath: string,
+  onError?: ChecksumErrorSink
+): Promise<string | null> {
   return new Promise((resolve) => {
     const hash = createHash('sha1');
     const stream = fs.createReadStream(filePath);
