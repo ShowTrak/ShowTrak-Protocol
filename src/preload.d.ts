@@ -51,6 +51,7 @@ import type {
   SettingGroupView,
   SettingView,
   ShowTrakAlert,
+  TagDisplayMode,
   TagScope,
   TagView,
   UpdateDeployResult,
@@ -290,6 +291,7 @@ export interface ShowTrakAPI {
   SetTagSlug(TagID: number, Slug: string): Promise<ResultTuple<boolean>>;
   SetTagColour(TagID: number, Colour: number): Promise<ResultTuple<boolean>>;
   SetTagIcon(TagID: number, Icon: string): Promise<ResultTuple<boolean>>;
+  SetTagDisplay(TagID: number, Display: TagDisplayMode): Promise<ResultTuple<boolean>>;
   SetTagScope(TagID: number, Scope: TagScope): Promise<ResultTuple<boolean>>;
   SetTagOrder(OrderedTagIDs: number[]): Promise<ResultTuple<boolean>>;
   DeleteTag(TagID: number): Promise<ResultTuple<unknown>>;

@@ -252,13 +252,31 @@ export interface GroupView {
  * Tag membership scope (same shape as ScriptWhitelistScope / AlertRuleScope).
  * `Workspace: true` means every client carries the tag; otherwise membership is
  * the union of the listed groups (by GroupID, dynamic — current AND future
- * members) and clients (by scoped ID: plain UUID, or `monitor:`/`check:`…).
+ * members), tags (by TagID, dynamic — a tag can therefore be a superset of
+ * other tags) and clients (by scoped ID: plain UUID, or `monitor:`/`check:`…).
+ *
+ * `Tags` is optional on the wire because rows written before tag-in-tag support
+ * do not carry it; every normalizer emits it, and readers must treat an absent
+ * list as empty rather than as "all".
  */
 export interface TagScope {
   Workspace: boolean;
   Groups: number[];
   Clients: string[];
+  Tags?: number[];
 }
+
+/**
+ * How a tag draws itself on a client tile.
+ *
+ * `hidden` keeps the tag fully functional (membership, scripts, OSC, alert
+ * scopes) while drawing nothing — the intended shape for tags that exist purely
+ * to target machines rather than to label them on screen.
+ *
+ * The tile's badge row is a fixed height, so the modes differ only in what a
+ * badge *contains*, never in how tall it is.
+ */
+export type TagDisplayMode = 'hidden' | 'icon' | 'name' | 'both';
 
 /** Renderer-facing tag. Colour is an index into the shared Scripts palette. */
 export interface TagView {
@@ -268,6 +286,10 @@ export interface TagView {
   Slug: string | null;
   Colour: number;
   Icon: string; // bare Bootstrap Icons name (no "bi-" prefix)
+  // Tile badge presentation. Optional on the wire: rows/servers written before
+  // this field existed omit it, and readers must fall back to 'name' (the
+  // behaviour every tag had then) rather than treating it as hidden.
+  Display?: TagDisplayMode;
   Scope: TagScope;
 }
 
@@ -301,13 +323,17 @@ export interface ScriptManagerEntry {
  * Per-script client/group whitelist scope (same shape as AlertRuleScope).
  * `Workspace: true` OR a null/absent scope both mean "all clients" (the
  * unrestricted default). `Workspace: false` restricts to the listed groups
- * (by GroupID) and clients (by UUID); an empty list therefore means "no
- * clients may run this script".
+ * (by GroupID), tags (by TagID) and clients (by UUID); an empty list therefore
+ * means "no clients may run this script".
+ *
+ * `Tags` is optional on the wire — rows written before tag support omit it and
+ * an absent list means "no tags", never "all".
  */
 export interface ScriptWhitelistScope {
   Workspace: boolean;
   Groups: number[];
   Clients: string[];
+  Tags?: number[];
 }
 
 /** `GetScriptConfig` editable form (ScriptManager `GetEditable`). */
@@ -535,10 +561,17 @@ export interface DummyClientDefaults {
 
 // ---- Alert rules ----------------------------------------------------------
 
+/**
+ * Which entities a rule watches. Same shape as TagScope / ScriptWhitelistScope:
+ * the union of every group, tag and client listed (or everything, when
+ * `Workspace` is true). `Tags` is optional — rules stored before tag support
+ * omit it, and an absent list means "no tags".
+ */
 export interface AlertRuleScope {
   Workspace: boolean;
   Groups: unknown[];
   Clients: unknown[];
+  Tags?: unknown[];
 }
 
 export interface AlertRuleActionView {
