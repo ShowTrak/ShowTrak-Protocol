@@ -29,6 +29,12 @@ export interface ClientToServerEvents {
   GetLaunchConfig: (callback: (config: LaunchConfigPayload) => void) => void;
   RegisterActions: (actions: IntegratedAction[]) => void;
   IntegratedEventResponse: (requestId: ExecutionRequestID, error: string | null) => void;
+  /**
+   * Optional progress line for an in-flight integrated event, shown in the
+   * execution UI in place of the row's status text. Ignored once the event has
+   * settled. Messages are capped at 255 characters.
+   */
+  IntegratedEventFeedback: (requestId: ExecutionRequestID, message: string) => void;
   SetIntegratedState: (state: IntegratedState | string, message?: string | null) => void;
   Heartbeat: (data: HeartbeatPayload) => void;
   SystemInfo: (data: SystemInfoPayload) => void;

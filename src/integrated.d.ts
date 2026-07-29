@@ -19,6 +19,15 @@ export interface IntegratedAction {
   Icon?: string;
   /** When true, the server waits for an `IntegratedEventResponse`. */
   HasFeedback: boolean;
+  /**
+   * How long the client gives its own handler before it self-resolves the
+   * event as timed out. The server arms a watchdog slightly beyond this so a
+   * device that disappears mid-event cannot leave the execution row pending,
+   * while a device that is merely slow still reports its own outcome first.
+   * Absent from SDKs that predate the feature; the server substitutes its
+   * default.
+   */
+  TimeoutMs?: number;
 }
 
 /**
