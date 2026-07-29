@@ -10,6 +10,13 @@ export interface IntegratedAction {
   Label: string;
   /** Colour palette index, 0-7. */
   ColourIndex: number;
+  /**
+   * Bare Bootstrap Icons name (no `bi-` prefix), e.g. `"lightning-charge-fill"`.
+   * Optional on the wire: SDKs that predate icons simply omit it, and the
+   * server substitutes `"terminal"`. Always present on actions the server has
+   * normalized, so consumers of a serialized client can read it directly.
+   */
+  Icon?: string;
   /** When true, the server waits for an `IntegratedEventResponse`. */
   HasFeedback: boolean;
 }
