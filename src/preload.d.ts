@@ -35,6 +35,15 @@ import type {
   FogStatusView,
   FogTaskTypeView,
   FogTaskView,
+  FreeKioskCameraInfo,
+  FreeKioskCaptureResult,
+  FreeKioskCommandDef,
+  FreeKioskCommandSummary,
+  FreeKioskMetricCatalog,
+  FreeKioskMetricSeries,
+  FreeKioskTerminalDefaults,
+  FreeKioskTerminalEditorView,
+  FreeKioskTerminalView,
   GroupView,
   HistorySample,
   MonitoringCheckDebug,
@@ -263,6 +272,35 @@ export interface ShowTrakAPI {
   ResetDummyClientToIdle(UUID: string): Promise<unknown>;
   SetFullDummyClientList(callback: (dummies: DummyClientView[]) => void): Unsubscribe;
   DummyClientUpdated(callback: (dummy: DummyClientView) => void): Unsubscribe;
+
+  // ---- FreeKiosk terminals ----------------------------------------------
+  GetFreeKioskMetrics(): Promise<FreeKioskMetricCatalog>;
+  GetFreeKioskCommands(): Promise<FreeKioskCommandDef[]>;
+  GetAllFreeKioskTerminals(): Promise<FreeKioskTerminalView[]>;
+  /** The editor's read — carries the stored API key, unlike the broadcast view. */
+  GetFreeKioskTerminal(UUID: string): Promise<FreeKioskTerminalEditorView | null>;
+  GetFreeKioskHistory(UUID: string, MetricKeys?: string[]): Promise<FreeKioskMetricSeries[]>;
+  GenerateFreeKioskTerminalDefaults(): Promise<FreeKioskTerminalDefaults>;
+  CreateFreeKioskTerminal(Payload: unknown): Promise<ResultTuple<FreeKioskTerminalView>>;
+  UpdateFreeKioskTerminal(
+    UUID: string,
+    Payload: unknown
+  ): Promise<ResultTuple<FreeKioskTerminalView>>;
+  DeleteFreeKioskTerminal(UUID: string): Promise<ResultTuple<unknown>>;
+  RunFreeKioskTerminalsNow(UUIDs: string[]): Promise<ResultTuple<FreeKioskCommandSummary>>;
+  SendFreeKioskCommand(
+    UUIDs: string[],
+    Command: string,
+    Params?: unknown
+  ): Promise<ResultTuple<FreeKioskCommandSummary>>;
+  CaptureFreeKioskScreenshot(UUID: string): Promise<ResultTuple<FreeKioskCaptureResult>>;
+  CaptureFreeKioskCamera(
+    UUID: string,
+    Options: unknown
+  ): Promise<ResultTuple<FreeKioskCaptureResult>>;
+  GetFreeKioskCameraList(UUID: string): Promise<FreeKioskCameraInfo[]>;
+  SetFullFreeKioskTerminalList(callback: (terminals: FreeKioskTerminalView[]) => void): Unsubscribe;
+  FreeKioskTerminalUpdated(callback: (terminal: FreeKioskTerminalView) => void): Unsubscribe;
 
   // ---- Network discovery ------------------------------------------------
   StartNetworkDeviceScan(Options: unknown): Promise<ResultTuple<{ ScanID: string }>>;

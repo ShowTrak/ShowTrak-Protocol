@@ -421,10 +421,16 @@ export interface ScriptExecutionView {
 
 // ---- Monitoring -----------------------------------------------------------
 
-/** Conditional visibility: field shows only while sibling `Key` equals `Equals`. */
+/**
+ * Conditional visibility: the field shows only while sibling `Key` matches.
+ * Give either `Equals` (exact match) or `In` (membership) — `In` exists so a
+ * field can be gated on "the operator is one of the ones that takes a value",
+ * which equality alone cannot express.
+ */
 export interface MonitoringSettingVisibleWhen {
   Key: string;
-  Equals: unknown;
+  Equals?: unknown;
+  In?: unknown[];
 }
 
 export interface MonitoringSettingField {
@@ -443,8 +449,12 @@ export interface MonitoringSettingField {
   Required?: boolean;
   /** Per-input hint shown as a hover popover on an info icon beside the input. */
   Note?: string;
-  /** When set, the field renders only while the referenced sibling setting equals the value. */
-  VisibleWhen?: MonitoringSettingVisibleWhen;
+  /**
+   * When set, the field renders only while the referenced sibling setting equals
+   * the value. An array is ANDed: every condition must hold. Use the array form
+   * to gate a field behind both an "enable" toggle and a specific operator.
+   */
+  VisibleWhen?: MonitoringSettingVisibleWhen | MonitoringSettingVisibleWhen[];
 }
 
 export interface MonitoringMethodInfo {
@@ -557,6 +567,239 @@ export interface DummyClientDefaults {
   DummyID: string;
   Nickname: string;
   Interval: number;
+}
+
+// ---- FreeKiosk terminals --------------------------------------------------
+
+/** Which section of the view modal / editor accordion a metric belongs to. */
+export type FreeKioskMetricSection =
+  | 'Battery'
+  | 'Screen'
+  | 'Content'
+  | 'Audio'
+  | 'Device'
+  | 'Network'
+  | 'Rotation'
+  | 'Sensors'
+  | 'Storage'
+  | 'Memory'
+  | 'Poll';
+
+export type FreeKioskMetricType = 'number' | 'boolean' | 'enum' | 'string';
+
+/** How a metric's history is drawn: numeric line, categorical blocks, or not at all. */
+export type FreeKioskChartKind = 'line' | 'blocks' | 'none';
+
+/** How a metric's value is rendered for humans. */
+export type FreeKioskMetricFormat = 'duration' | 'dbm' | 'url' | 'megabytes' | 'raw';
+
+/**
+ * Comparison a metric alarm can arm. `changes` and `decreases` are edge
+ * detectors judged against the previous poll and take no threshold value.
+ */
+export type FreeKioskOperator =
+  | 'below'
+  | 'above'
+  | 'outside'
+  | 'inside'
+  | 'is'
+  | 'isNot'
+  | 'contains'
+  | 'notContains'
+  | 'changes'
+  | 'decreases';
+
+/** One entry of the server-declared metric registry, as delivered to the renderer. */
+/**
+ * What a terminal is set up to show. Declared by the operator: FreeKiosk's API
+ * cannot report it, and never clears the WebView readings when an external app
+ * takes over.
+ */
+export type FreeKioskDisplayMode = 'webview' | 'external_app' | 'media_player';
+
+export interface FreeKioskMetricView {
+  Key: string;
+  Label: string;
+  Type: FreeKioskMetricType;
+  Section: FreeKioskMetricSection;
+  Chart: FreeKioskChartKind;
+  /** Display modes this reading means anything in. Absent means all of them. */
+  RequiresMode?: FreeKioskDisplayMode[];
+  Unit?: string;
+  Decimals?: number;
+  Min?: number;
+  Max?: number;
+  Options?: string[];
+  Operators: FreeKioskOperator[];
+  DefaultOperator?: FreeKioskOperator;
+  Format?: FreeKioskMetricFormat;
+  Advanced?: boolean;
+  Note?: string;
+}
+
+/**
+ * The whole registry in one payload: the metrics themselves plus the generated
+ * alarm settings schema, which the renderer feeds through the same field
+ * renderer the monitoring editor uses.
+ */
+/**
+ * A section monitoring can be switched off for wholesale, keyed `G_<Key>_On` in
+ * a terminal's Settings. Switching one off hides its alarm toggles and charts,
+ * stops its history, and force-disables any alarm armed inside it.
+ */
+export interface FreeKioskMetricGroupView {
+  Key: FreeKioskMetricSection;
+  Label: string;
+  DefaultOn: boolean;
+  /** No switch is offered; ShowTrak depends on it. */
+  Fixed?: boolean;
+  Note?: string;
+}
+
+export interface FreeKioskMetricCatalog {
+  Metrics: FreeKioskMetricView[];
+  AlarmFields: MonitoringSettingField[];
+  Sections: FreeKioskMetricSection[];
+  Groups: FreeKioskMetricGroupView[];
+}
+
+/** A control the UI may offer for a terminal. The server's map is the allowlist. */
+export interface FreeKioskCommandDef {
+  ID: string;
+  Label: string;
+  Icon: string;
+  Group: 'Power' | 'Display' | 'Content' | 'Audio' | 'Maintenance';
+  Params?: MonitoringSettingField[];
+  /**
+   * Display modes this command does anything in. Absent means all of them. The
+   * device accepts an out-of-mode command and silently no-ops, so the server
+   * refuses these rather than reporting a success that never happened.
+   */
+  Modes?: FreeKioskDisplayMode[];
+  /** The device drops the connection carrying this out; that is success. */
+  ExpectDisconnect?: boolean;
+  /** Needs a confirmation dialog before running. */
+  Destructive?: boolean;
+  /** Offered in the multi-select context menu. */
+  Bulk?: boolean;
+  Control?: 'button' | 'slider';
+  /** Registry metric this control writes, used to reconcile sliders after a poll. */
+  Metric?: string;
+  Note?: string;
+}
+
+/**
+ * One point of a per-metric time series. `n` carries numeric metrics and `s`
+ * categorical ones, so a single shape serves both chart kinds. `breach` records
+ * the alarm verdict at sample time so chart shading can never drift from what
+ * the alert engine actually decided.
+ */
+export interface FreeKioskMetricSample {
+  ts: number;
+  ok: boolean;
+  n: number | null;
+  s: string | null;
+  breach: boolean;
+}
+
+export interface FreeKioskMetricSeries {
+  MetricKey: string;
+  Samples: FreeKioskMetricSample[];
+}
+
+/** A currently-breaching alarm, surfaced on the tile and in the view modal. */
+export interface FreeKioskAlarmState {
+  Key: string;
+  Label: string;
+  Value: string | number | boolean | null;
+  Reason: string;
+}
+
+export interface FreeKioskTerminalView {
+  UUID: string;
+  /** Stable, human-friendly OSC/API identifier; unique across the shared client namespace. */
+  Slug: string | null;
+  Nickname: string;
+  /** Device model once known, else the FreeKiosk default hostname. */
+  Hostname: string;
+  Address: string;
+  Port: number;
+  /** The API key itself is never broadcast — only whether one is configured. */
+  HasApiKey: boolean;
+  IP: string | null;
+  Version: 'FreeKiosk';
+  Interval: number;
+  TimeoutMs: number;
+  GroupID: number | null;
+  Weight: number;
+  Timestamp: number;
+  /** Per-metric alarm configuration, keyed A_<MetricKey>_On / _Op / _V / _V2. */
+  Settings: Record<string, unknown>;
+  State: 'IDLE' | 'ONLINE' | 'DEGRADED' | 'OFFLINE';
+  Online: boolean;
+  Degraded: boolean;
+  DegradedWarnings: string[];
+  Alarms: FreeKioskAlarmState[];
+  /** Latest reading per registry metric key; retained while offline so the modal is not blank. */
+  Metrics: Record<string, string | number | boolean | null>;
+  LastError: string | null;
+  LastChecked: number | null;
+  LastSuccessAt: number | null;
+  LastLatencyMs: number | null;
+  /** null until the first control attempt; false when the device has remote control disabled. */
+  ControlEnabled: boolean | null;
+  Type: 'freekiosk';
+}
+
+/**
+ * What the editor reads: the broadcast view plus the stored API key.
+ *
+ * The key is left out of FreeKioskTerminalView because that shape is pushed to
+ * every connected Web UI on every poll and JSON-stringified into alert history,
+ * neither of which needs it. This shape is only ever returned in direct response
+ * to opening the editor — the one place the key has to be shown, because it is
+ * the form that edits it.
+ */
+export interface FreeKioskTerminalEditorView extends FreeKioskTerminalView {
+  ApiKey: string | null;
+}
+
+export interface FreeKioskTerminalDefaults {
+  Nickname: string;
+  Address: string;
+  Port: number;
+  Interval: number;
+  TimeoutMs: number;
+  Settings: Record<string, unknown>;
+}
+
+export interface FreeKioskCameraInfo {
+  id: string;
+  facing: string;
+  maxWidth: number;
+  maxHeight: number;
+}
+
+/** An on-demand screenshot or camera capture. Never persisted, never broadcast. */
+export interface FreeKioskCaptureResult {
+  DataUrl: string;
+  Bytes: number;
+  Mime: string;
+  CapturedAt: number;
+}
+
+export interface FreeKioskCommandOutcome {
+  UUID: string;
+  Success: boolean;
+  Error: string | null;
+}
+
+/** Per-UUID results of a fanned-out command; one slow or refusing device never fails the batch. */
+export interface FreeKioskCommandSummary {
+  Total: number;
+  Succeeded: number;
+  Failed: number;
+  Results: FreeKioskCommandOutcome[];
 }
 
 // ---- Alert rules ----------------------------------------------------------
