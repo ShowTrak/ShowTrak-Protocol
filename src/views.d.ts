@@ -1015,6 +1015,34 @@ export interface WebUIAddresses {
   urls: Array<{ host: string; url: string }>;
 }
 
+// ---- ShowTrak Remote ------------------------------------------------------
+
+/**
+ * A phone or tablet paired to this server through the `/sdk` control API.
+ *
+ * Deliberately carries neither the device token nor its hash: this shape exists
+ * to be rendered in a settings list, and the token is returned exactly once, to
+ * the device, at pairing.
+ */
+export interface RemoteDeviceView {
+  DeviceID: string;
+  DeviceName: string;
+  /** 'ios' | 'android' when the device declared one it recognises, else null. */
+  Platform: string | null;
+  PairedAt: number;
+  /** Null until the device's first reconnect after pairing. */
+  LastSeenAt: number | null;
+}
+
+/**
+ * A single-use pairing code, for display as a QR. Short-lived by design — it is
+ * shown on a screen anyone in the room can see.
+ */
+export interface RemotePairingCode {
+  Code: string;
+  ExpiresAt: number;
+}
+
 // ---- Update manager -------------------------------------------------------
 
 export interface UpdateManagerStatus {

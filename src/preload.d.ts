@@ -69,6 +69,8 @@ import type {
   UpdateManagerStatus,
   UpdateReleaseOption,
   WebUIAddresses,
+  RemoteDeviceView,
+  RemotePairingCode,
 } from './views';
 
 /** Unsubscribe handle returned by every `subscribe`-backed API method. */
@@ -101,6 +103,16 @@ export interface ShowTrakAPI {
   GetWebUIAddresses(): Promise<WebUIAddresses>;
   OnNetworkInterfacesChanged(callback: (payload: unknown) => void): Unsubscribe;
   GetSettings(): Promise<SettingView[]>;
+
+  // ---- ShowTrak Remote (desktop only) -----------------------------------
+  // Absent from the web and remote channel allowlists on purpose: a phone must
+  // not be able to enumerate — let alone revoke — the other phones paired to a
+  // workspace. Revocation is a decision made at the desk.
+  GetRemoteDevices(): Promise<ResultTuple<RemoteDeviceView[]>>;
+  RevokeRemoteDevice(DeviceID: string): Promise<ResultTuple<string>>;
+  RevokeAllRemoteDevices(): Promise<ResultTuple<boolean>>;
+  IssueRemotePairingCode(): Promise<ResultTuple<RemotePairingCode>>;
+  ClearRemotePairingCode(): Promise<ResultTuple<boolean>>;
 
   // ---- Adoption / updates -----------------------------------------------
   AdoptDevice(UUID: string): Promise<unknown>;
