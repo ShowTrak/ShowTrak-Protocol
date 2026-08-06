@@ -14,6 +14,7 @@
 // files are migrated and their real usage is known.
 
 import type { USBDevice } from './telemetry';
+import type { ClientVariableView, VariableView } from './variables';
 import type {
   AlertActionType,
   AlertRuleView,
@@ -346,6 +347,18 @@ export interface ShowTrakAPI {
   SetTagOrder(OrderedTagIDs: number[]): Promise<ResultTuple<boolean>>;
   DeleteTag(TagID: number): Promise<ResultTuple<unknown>>;
   OnSetTagList(callback: (tags: TagView[]) => void): Unsubscribe;
+
+  // ---- Show Variables ---------------------------------------------------
+  GetAllVariables(): Promise<VariableView[]>;
+  CreateVariable(Key?: string): Promise<ResultTuple<VariableView>>;
+  SetVariableKey(VariableID: number, Key: string): Promise<ResultTuple<boolean>>;
+  SetVariableDescription(VariableID: number, Description: string): Promise<ResultTuple<boolean>>;
+  SetVariableDefault(VariableID: number, DefaultValue: string): Promise<ResultTuple<boolean>>;
+  SetVariableExport(VariableID: number, ExportToSystem: boolean): Promise<ResultTuple<boolean>>;
+  DeleteVariable(VariableID: number): Promise<ResultTuple<unknown>>;
+  /** Definitions joined with one client's overrides, for the client editor. */
+  GetClientVariables(UUID: string): Promise<ClientVariableView[]>;
+  OnSetVariableList(callback: (variables: VariableView[]) => void): Unsubscribe;
 
   // ---- FOG Project integration ------------------------------------------
   GetFogStatus(): Promise<FogStatusView>;

@@ -8,6 +8,7 @@ export * from './telemetry';
 export * from './adoption';
 export * from './integrated';
 export * from './execution';
+export * from './variables';
 export * from './events';
 export * from './views';
 export * from './preload';

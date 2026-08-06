@@ -21,12 +21,23 @@ import type {
   LaunchConfigPayload,
   UpdateSoftwareFromLANPayload,
 } from './execution';
+import type { VariableEnvironment, VariablePayload } from './variables';
 
 /** Events emitted by the client and handled by the server. */
 export interface ClientToServerEvents {
   AdoptionHeartbeat: (data: AdoptionHeartbeatPayload) => void;
   GetScripts: (callback: (scripts: unknown) => void) => void;
   GetLaunchConfig: (callback: (config: LaunchConfigPayload) => void) => void;
+  /**
+   * Fetch this client's resolved show variables. Requested once per connection,
+   * before the run-on-launch sequence hands off, so a launch script sees the
+   * same values a server-dispatched one would.
+   *
+   * A server that predates variables has no handler and never acks, which the
+   * client treats as "no variables" — the same absence-is-the-answer pattern
+   * `GetServerCapabilities` uses.
+   */
+  GetVariables: (callback: (payload: VariablePayload) => void) => void;
   RegisterActions: (actions: IntegratedAction[]) => void;
   IntegratedEventResponse: (requestId: ExecutionRequestID, error: string | null) => void;
   /**
@@ -82,8 +93,25 @@ export interface ServerToClientEvents {
   ) => void;
   DeleteScripts: (requestId: ExecutionRequestID) => void;
   UpdateScripts: (requestId: ExecutionRequestID) => void;
-  ExecuteScript: (requestId: ExecutionRequestID, scriptId: string) => void;
+  /**
+   * `variables` is resolved at dispatch time, not at enqueue time, so a script
+   * that waited its turn behind another runs with the values that were current
+   * when it actually started. It is optional purely for wire compatibility: an
+   * older server omits it and the client falls back to its pushed cache.
+   */
+  ExecuteScript: (
+    requestId: ExecutionRequestID,
+    scriptId: string,
+    variables?: VariableEnvironment
+  ) => void;
   TriggerIntegratedEvent: (requestId: ExecutionRequestID, eventId: string) => void;
+  /**
+   * Re-push the client's resolved variables after any change to a definition or
+   * to this client's overrides. Editing a *default* moves every client that has
+   * not overridden it, so definition changes fan out to all connected clients
+   * while an override change targets the one room.
+   */
+  SetVariables: (payload: VariablePayload) => void;
   Identify: (payload: IdentifyPayload) => void;
   /** Clears an active Identify overlay. Emitted by the server's IdentifyManager. */
   StopIdentify: () => void;
