@@ -47,6 +47,8 @@ import type {
   FreeKioskTerminalView,
   GroupView,
   HistorySample,
+  MonitoringActionFavouriteView,
+  MonitoringActionSummary,
   MonitoringCheckDebug,
   MonitoringMethodView,
   MonitoringTargetView,
@@ -273,6 +275,26 @@ export interface ShowTrakAPI {
   DeleteMonitoringTarget(TargetID: number): Promise<ResultTuple<unknown>>;
   SetFullMonitoringTargetList(callback: (targets: MonitoringTargetView[]) => void): Unsubscribe;
   MonitoringTargetUpdated(callback: (target: MonitoringTargetView) => void): Unsubscribe;
+
+  // ---- Monitoring check actions ------------------------------------------
+  /** Fan one action out across every selected target that has a check of that method. */
+  RunMonitoringAction(
+    TargetIDs: number[],
+    Method: string,
+    ActionID: string,
+    Params?: Record<string, unknown>
+  ): Promise<ResultTuple<MonitoringActionSummary>>;
+  GetMonitoringActionFavourites(): Promise<MonitoringActionFavouriteView[]>;
+  /** Star or unstar one action+parameter combination. Starring twice is a no-op. */
+  SetMonitoringActionFavourite(
+    Method: string,
+    ActionID: string,
+    Params: Record<string, unknown> | null,
+    Favourite: boolean
+  ): Promise<ResultTuple<MonitoringActionFavouriteView[]>>;
+  SetFullMonitoringActionFavouriteList(
+    callback: (favourites: MonitoringActionFavouriteView[]) => void
+  ): Unsubscribe;
 
   // ---- Dummy clients ----------------------------------------------------
   GetAllDummyClients(): Promise<DummyClientView[]>;

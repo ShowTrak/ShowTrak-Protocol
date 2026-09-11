@@ -464,6 +464,69 @@ export interface MonitoringMethodInfo {
   Links?: Array<{ Label: string; Url: string }>;
 }
 
+/**
+ * One controllable action a monitoring method declares — something the operator
+ * can DO to the monitored device, as opposed to something the check reads.
+ *
+ * Actions are addressed as `<Method>/<ActionID>` everywhere (UI, IPC, OSC), so
+ * a method owns its own action namespace and a new check type gains a control
+ * surface without any transport learning about it.
+ */
+export interface MonitoringActionDef {
+  /** Stable, dot-separated and OSC-safe within its method, e.g. `power.on`. */
+  ID: string;
+  Label: string;
+  /** Bootstrap Icons name without the `bi-` prefix. */
+  Icon: string;
+  /** Grouping label for the monitor modal's control panel (e.g. "Power"). */
+  Group: string;
+  /** Parameter schema, rendered by the same field renderer as check settings. */
+  Params?: MonitoringSettingField[];
+  /** Needs a confirmation dialog before it is sent. */
+  Destructive?: boolean;
+  Note?: string;
+}
+
+/**
+ * Per-check choices for an action parameter, keyed by the parameter's Key and
+ * refreshed from each probe. Lets a method offer what THIS device actually
+ * supports (the input sources a projector reports) in place of the static
+ * schema's free-text field.
+ */
+export type MonitoringActionOptions = Record<string, Array<{ value: string; label: string }>>;
+
+/** A starred action, offered in the context menu for any selected monitor whose checks declare it. */
+export interface MonitoringActionFavouriteView {
+  FavouriteID: number;
+  Method: string;
+  ActionID: string;
+  /** Parameters baked into the favourite, so "Set Input - Digital 1" is one entry. */
+  Params: Record<string, unknown>;
+  /** Resolved display label, including any parameter summary. */
+  Label: string;
+  /** Bootstrap Icons name without the `bi-` prefix, copied from the action. */
+  Icon: string;
+  Weight: number;
+}
+
+/** One check's outcome from a fanned-out action run. */
+export interface MonitoringActionOutcome {
+  TargetID: number;
+  CheckID: number;
+  /** The target's nickname, so a failure can name the projector that refused. */
+  Nickname: string;
+  Success: boolean;
+  Error: string | null;
+  Detail: string | null;
+}
+
+export interface MonitoringActionSummary {
+  Total: number;
+  Succeeded: number;
+  Failed: number;
+  Results: MonitoringActionOutcome[];
+}
+
 export interface MonitoringMethodView {
   ID: string;
   Name: string;
@@ -479,6 +542,8 @@ export interface MonitoringMethodView {
   // hides that Advanced field. Defaults to true.
   SupportsLatencyThreshold: boolean;
   Settings: MonitoringSettingField[];
+  // Controllable actions this method offers (empty for read-only check types).
+  Actions: MonitoringActionDef[];
 }
 
 export interface MonitoringCheckView {
@@ -496,6 +561,11 @@ export interface MonitoringCheckView {
   LastChecked: number | null;
   LastLatencyMs: number | null;
   LastError: string | null;
+  /**
+   * Dynamic choices for this check's action parameters, refreshed on every
+   * probe. Absent until the first successful run reports any.
+   */
+  ActionOptions?: MonitoringActionOptions;
 }
 
 export interface MonitoringTargetView {
