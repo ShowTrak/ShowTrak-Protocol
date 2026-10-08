@@ -246,6 +246,9 @@ export interface GroupView {
   // Columns spanned when not full width. Renderers clamp it to the configured
   // column count, so it may exceed the columns currently on screen.
   ColumnSpan?: number;
+  // Background tint: an index into the shared colour palette (the one scripts
+  // and tags use), or null for the plain untinted box.
+  Colour?: number | null;
   KeyBind?: string | null;
   // Stable, human-friendly OSC/API identifier; unique among groups.
   Slug?: string | null;
