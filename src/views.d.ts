@@ -243,6 +243,9 @@ export interface GroupView {
   // Emitted by both the web serializer (ToPublicGroup) and the desktop group
   // entity as `isFullWidth`. KeyBind is emitted by the desktop entity only.
   isFullWidth?: boolean;
+  // Columns spanned when not full width. Renderers clamp it to the configured
+  // column count, so it may exceed the columns currently on screen.
+  ColumnSpan?: number;
   KeyBind?: string | null;
   // Stable, human-friendly OSC/API identifier; unique among groups.
   Slug?: string | null;
