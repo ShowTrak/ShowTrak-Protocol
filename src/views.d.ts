@@ -349,7 +349,7 @@ export interface ScriptEditable {
   description: string;
   colour: number;
   icon: string;
-  confirm: boolean;
+  confirmation: ScriptConfirmationLevel;
   timeoutMs: number;
   enabled: boolean;
   platforms: Record<string, string>;
@@ -377,6 +377,13 @@ export interface ScriptFileEntry {
   Checksum?: string | null;
 }
 
+/**
+ * How hard a script asks before it runs. "Critical" is a full-screen red
+ * warning whose default action is Cancel. On disk this is the `Confirmation`
+ * boolean plus an optional `ConfirmationStyle: "Critical"`.
+ */
+export type ScriptConfirmationLevel = 'None' | 'Standard' | 'Critical';
+
 /** `SetScriptList` push catalog entry (PascalCase; serialized Script class). */
 export interface ScriptCatalogEntry {
   ID: string;
@@ -385,7 +392,10 @@ export interface ScriptCatalogEntry {
   Colour: number;
   Icon: string;
   Weight: number;
+  /** True for both Standard and Critical; kept for consumers that predate levels. */
   Confirmation: boolean;
+  /** Absent from servers that predate levels: fall back to `Confirmation`. */
+  ConfirmationLevel?: ScriptConfirmationLevel;
   Timeout?: number;
   Platforms: Record<string, string>;
   Arguments: Record<string, string>;
