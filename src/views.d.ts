@@ -570,6 +570,18 @@ export interface MonitoringCheckView {
   Method: string;
   Settings: Record<string, unknown>;
   DegradedThresholdMs: number;
+  /**
+   * Consecutive failed probes needed before this check reads offline. `null`
+   * inherits the target's value (which in turn inherits the server-wide
+   * default); `EffectiveFailureThreshold` is the value actually in force.
+   */
+  FailureThreshold: number | null;
+  EffectiveFailureThreshold: number;
+  /**
+   * Failed probes in a row so far. Below the threshold the check keeps its last
+   * verdict, so a non-zero count on an online check means "missed, not yet down".
+   */
+  ConsecutiveFailures: number;
   Weight: number;
   LastSuccessAt: number | null;
   Online: boolean;
@@ -594,6 +606,11 @@ export interface MonitoringTargetView {
   // namespace. Nullable only in the window before first-boot back-fill.
   Slug: string | null;
   Timestamp: number;
+  /**
+   * Target-wide override for consecutive failures before a check reads offline.
+   * `null` inherits the server-wide default; individual checks may override it.
+   */
+  FailureThreshold: number | null;
   Address: string;
   Method: string;
   DegradedThresholdMs: number;
@@ -626,6 +643,9 @@ export interface MonitoringCheckDebug {
   LastChecked: number | null;
   LastLatencyMs: number | null;
   LastDebugAt: number | null;
+  /** Failed probes in a row, and how many it takes to read offline. */
+  ConsecutiveFailures: number;
+  EffectiveFailureThreshold: number;
 }
 
 // ---- Dummy clients --------------------------------------------------------
