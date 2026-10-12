@@ -1223,9 +1223,26 @@ export type NetworkScanEvent =
 
 // ---- OSC ------------------------------------------------------------------
 
+/** One accepted value for a route's placeholder(s), e.g. `pjlink/power.on`. */
+export interface OSCRouteValue {
+  Value: string;
+  Label: string;
+  Note?: string;
+}
+
 export interface OSCRoute {
   Title: string;
   Path: string;
+  /**
+   * Every value the route accepts, when they come from a fixed catalogue (check
+   * actions, FreeKiosk commands). Absent for routes whose values are the
+   * operator's own data, such as slugs and script IDs.
+   */
+  Values?: {
+    /** The placeholder(s) the entries fill, e.g. `Method/ActionID`. */
+    Param: string;
+    Entries: OSCRouteValue[];
+  };
 }
 
 export type OSCBulkActionType =
