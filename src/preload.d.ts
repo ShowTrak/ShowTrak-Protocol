@@ -13,7 +13,7 @@
 // where the payload is opaque/dynamic; the latter are tightened as the renderer
 // files are migrated and their real usage is known.
 
-import type { USBDevice } from './telemetry';
+import type { AudioLevelRequest, USBDevice } from './telemetry';
 import type { ClientVariableView, VariableView } from './variables';
 import type {
   AlertActionType,
@@ -26,6 +26,7 @@ import type {
   AudioAssetInspection,
   AudioAssetView,
   ClientApplicationHistorySeries,
+  ClientAudioHistorySeries,
   ClientDisplayHistorySeries,
   ClientUSBHistorySeries,
   ClientView,
@@ -75,6 +76,19 @@ import type {
   RemoteDeviceView,
   RemotePairingCode,
 } from './views';
+
+/** Payload of `MarkClientAudioDeviceCritical`. Omitted options keep their current value. */
+export interface CriticalAudioDevicePayload {
+  EndpointID: string;
+  RequireDefault?: boolean;
+  RequireUnmuted?: boolean;
+  /** 0-100, or null to leave that bound open. */
+  MinVolume?: number | null;
+  MaxVolume?: number | null;
+  /** Guard the channel count / sample rate the endpoint has right now. */
+  CheckChannels?: boolean;
+  CheckSampleRate?: boolean;
+}
 
 /** Unsubscribe handle returned by every `subscribe`-backed API method. */
 export type Unsubscribe = () => void;
@@ -140,6 +154,7 @@ export interface ShowTrakAPI {
   GetClientApplicationHistory(UUID: string): Promise<ClientApplicationHistorySeries[]>;
   GetClientUSBHistory(UUID: string): Promise<ClientUSBHistorySeries[]>;
   GetClientDisplayHistory(UUID: string): Promise<ClientDisplayHistorySeries[]>;
+  GetClientAudioHistory(UUID: string): Promise<ClientAudioHistorySeries[]>;
   UpdateClient(UUID: string, Data: Record<string, unknown>): Promise<ResultTuple<unknown>>;
   MarkClientUSBDeviceCritical(UUID: string, Device: unknown): Promise<ResultTuple<unknown>>;
   RemoveClientUSBDeviceCritical(UUID: string, SerialNumber: string): Promise<ResultTuple<unknown>>;
@@ -152,6 +167,18 @@ export interface ShowTrakAPI {
   ): Promise<ResultTuple<unknown>>;
   MarkClientDisplayCritical(UUID: string, Display: unknown): Promise<ResultTuple<unknown>>;
   RemoveClientDisplayCritical(UUID: string, DisplayID: string): Promise<ResultTuple<unknown>>;
+  /**
+   * Mark an audio endpoint critical, or update the conditions it is guarded by.
+   * Channels and sample rate are captured from the live endpoint when their
+   * checks are on; an endpoint that is currently missing keeps its old baseline.
+   */
+  MarkClientAudioDeviceCritical(
+    UUID: string,
+    Device: CriticalAudioDevicePayload
+  ): Promise<ResultTuple<unknown>>;
+  RemoveClientAudioDeviceCritical(UUID: string, EndpointID: string): Promise<ResultTuple<unknown>>;
+  /** Change an endpoint's level and/or mute on the client machine. */
+  SetClientAudioLevel(UUID: string, Request: AudioLevelRequest): Promise<ResultTuple<boolean>>;
   /** Manually record an extra MAC address against a client. Resolves Ok(true)
    *  when a new address was stored, Ok(false) when it was already on file. */
   AddClientMacAddress(UUID: string, MacAddress: string): Promise<ResultTuple<boolean>>;

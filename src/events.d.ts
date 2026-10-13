@@ -13,6 +13,9 @@ import type {
   DisplayDelta,
   ApplicationDelta,
   ServerCapabilities,
+  AudioDevicesSnapshot,
+  AudioLevelRequest,
+  AudioLevelResult,
 } from './telemetry';
 import type { AdoptionHeartbeatPayload, UnadoptPayload, IdentifyPayload } from './adoption';
 import type { IntegratedAction, IntegratedState } from './integrated';
@@ -55,6 +58,8 @@ export interface ClientToServerEvents {
   DisplayList: (displays: ClientDisplay[]) => void;
   NetworkInterfaces: (interfaces: NetworkInterface[]) => void;
   RunningApplications: (snapshot: RunningApplicationsSnapshot) => void;
+  /** Audio endpoints. A full snapshot on every change, plus a keepalive. */
+  AudioDevices: (snapshot: AudioDevicesSnapshot) => void;
   /**
    * Ask what the server understands. A server that predates this event never
    * invokes the callback, which is how the client detects an older server and
@@ -115,4 +120,13 @@ export interface ServerToClientEvents {
   Identify: (payload: IdentifyPayload) => void;
   /** Clears an active Identify overlay. Emitted by the server's IdentifyManager. */
   StopIdentify: () => void;
+  /**
+   * Change one audio endpoint's level and/or mute. The client applies it,
+   * re-samples, reports the new snapshot, and only then acknowledges — so by the
+   * time the server hears "done", the new level is already on its way.
+   *
+   * A client that predates audio monitoring has no handler and never acks; the
+   * server times the request out and says so.
+   */
+  SetAudioLevel: (request: AudioLevelRequest, callback: (result: AudioLevelResult) => void) => void;
 }

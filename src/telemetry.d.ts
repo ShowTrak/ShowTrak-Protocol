@@ -130,6 +130,127 @@ export interface RunningApplicationsSnapshot {
   NoChanges?: boolean;
 }
 
+// --- Audio devices -----------------------------------------------------------
+//
+// Reported as a full snapshot on every change and on a short keepalive. An audio
+// rig has a handful of endpoints, so a whole snapshot is a few hundred bytes and
+// a delta protocol would buy nothing but a second code path.
+
+/** Which way audio flows through an endpoint. */
+export type AudioDirection = 'input' | 'output';
+
+/** How a device is attached, as far as the operating system will say. */
+export type AudioTransport =
+  | 'builtin'
+  | 'usb'
+  | 'bluetooth'
+  | 'hdmi'
+  | 'displayport'
+  | 'thunderbolt'
+  | 'firewire'
+  | 'pci'
+  | 'network'
+  | 'virtual'
+  | 'aggregate'
+  | 'airplay'
+  | 'unknown';
+
+/** The OS facility the client read audio devices through. */
+export type AudioBackend = 'coreaudio' | 'wasapi' | 'pulseaudio' | 'alsa';
+
+/**
+ * One audio endpoint: a single direction of a single device.
+ *
+ * A duplex interface (one with both inputs and outputs) is reported as TWO
+ * endpoints. That is how Windows and PulseAudio model audio natively, and it
+ * keeps "the default input" and "the default output" independent — on macOS the
+ * client splits each device itself to match.
+ */
+export interface AudioEndpoint {
+  /**
+   * Stable across reboots where the platform allows: the MMDevice id on
+   * Windows, the sink/source name on PulseAudio. macOS exposes no device UID to
+   * the client, so there it is derived from the direction, manufacturer and name
+   * (plus an ordinal when two devices share all three).
+   */
+  EndpointID: string;
+  Direction: AudioDirection;
+  Name: string;
+  Manufacturer: string | null;
+  /** Null when the platform does not report it (see AudioCapabilities). */
+  Transport: AudioTransport | null;
+  /** Channel count in this endpoint's direction. */
+  Channels: number | null;
+  /** Nominal sample rate in Hz. */
+  SampleRate: number | null;
+  /** Whether this is the operating system's default for its direction. */
+  IsDefault: boolean;
+  /** Level, 0-100 (PulseAudio can report boost above 100). Null when unreadable. */
+  Volume: number | null;
+  Muted: boolean | null;
+}
+
+/**
+ * How far a level or mute reading reaches on a platform: every endpoint, only
+ * the current default endpoint for that direction, or nothing at all.
+ *
+ * A level that can be read can also be set remotely; the scope is the same.
+ */
+export type AudioControlScope = 'device' | 'default' | 'none';
+
+/**
+ * What the client's platform can actually report. Sent with every snapshot so
+ * the server can say "not available on this operating system" from the
+ * client's own word, rather than from a table that drifts from the client.
+ */
+export interface AudioCapabilities {
+  DefaultDevice: boolean;
+  Channels: boolean;
+  SampleRate: boolean;
+  Transport: boolean;
+  InputVolume: AudioControlScope;
+  OutputVolume: AudioControlScope;
+  InputMute: AudioControlScope;
+  OutputMute: AudioControlScope;
+}
+
+/**
+ * Health of the client's audio collector. `unsupported` means no backend works
+ * on this machine at all (no audio stack the client knows how to read).
+ */
+export type AudioMonitorState = 'unknown' | 'ok' | 'error' | 'unsupported';
+
+export interface AudioMonitorStatus {
+  State: AudioMonitorState;
+  Message: string | null;
+  /** Node's `process.platform` on the client. */
+  Platform: string;
+  /** Null until a backend has answered (and while none can). */
+  Backend: AudioBackend | null;
+}
+
+/** Payload of the `AudioDevices` event. */
+export interface AudioDevicesSnapshot {
+  SampledAt: number;
+  Endpoints: AudioEndpoint[];
+  Status: AudioMonitorStatus;
+  Capabilities: AudioCapabilities;
+}
+
+/** Server -> client request to change one endpoint's level and/or mute. */
+export interface AudioLevelRequest {
+  EndpointID: string;
+  /** 0-100. Omitted to leave the level alone. */
+  Volume?: number;
+  /** Omitted to leave the mute state alone. */
+  Muted?: boolean;
+}
+
+export interface AudioLevelResult {
+  Success: boolean;
+  Error: string | null;
+}
+
 // --- Incremental telemetry (deltas) ----------------------------------------
 //
 // The full-list events above remain the authority: they are sent on connect and

@@ -13,6 +13,10 @@ import type {
   NetworkInterface,
   RunningApplicationItem,
   RunningApplicationsStatus,
+  AudioCapabilities,
+  AudioDirection,
+  AudioEndpoint,
+  AudioMonitorStatus,
 } from './telemetry';
 import type { Vitals } from './vitals';
 import type { IntegratedAction } from './integrated';
@@ -143,6 +147,61 @@ export interface MismatchedCriticalDisplay extends ClientDisplay {
 }
 
 /**
+ * A user-marked critical audio endpoint: the persisted baseline, and the
+ * conditions it must keep. Emitted in `ClientView.CriticalAudioDevices`.
+ *
+ * `Channels` / `SampleRate` are captured from the live endpoint when it is
+ * marked; null means that property is not guarded. `MinVolume` / `MaxVolume`
+ * bound the level (0-100); null leaves that side open.
+ */
+export interface CriticalAudioDevice {
+  EndpointID: string;
+  Direction: AudioDirection;
+  Name: string;
+  Channels: number | null;
+  SampleRate: number | null;
+  RequireDefault: boolean;
+  RequireUnmuted: boolean;
+  MinVolume: number | null;
+  MaxVolume: number | null;
+  Timestamp: number | null;
+}
+
+/** Why a critical audio endpoint is not in its expected state. */
+export type AudioIssueKind =
+  'missing' | 'not_default' | 'channels' | 'sample_rate' | 'muted' | 'volume';
+
+export interface AudioIssue {
+  Kind: AudioIssueKind;
+  /** Operator-facing sentence, e.g. "Sample rate is 44.1 kHz (expected 48 kHz)". */
+  Message: string;
+}
+
+/**
+ * An audio endpoint as serialized to the renderer: either one the client
+ * reported (`IsConnected`), or a critical one it did not (`Missing`), which then
+ * carries its baseline values and nulls for everything only a live device has.
+ */
+export interface AudioEndpointView extends AudioEndpoint {
+  IsConnected: boolean;
+  IsCritical: boolean;
+  Missing: boolean;
+  /** Empty for a healthy or non-critical endpoint. */
+  Issues: AudioIssue[];
+  Critical: CriticalAudioDevice | null;
+}
+
+/** `ClientView.AudioDevices`: everything the server knows about a client's audio. */
+export interface AudioDevicesView {
+  /** Null until this connection has reported audio at all. */
+  SampledAt: number | null;
+  Status: AudioMonitorStatus;
+  /** Null until the first report; the renderer then cannot yet say what is unavailable. */
+  Capabilities: AudioCapabilities | null;
+  Endpoints: AudioEndpointView[];
+}
+
+/**
  * Telemetry list elements as *serialized* to the renderer: the raw wire shapes
  * enriched in-place by the Client class's critical-marking machinery.
  */
@@ -212,7 +271,7 @@ export interface ClientView {
   Degraded?: boolean;
   DegradedWarnings?: string[];
   /** Online, but inside its start-up window with a critical application, USB
-   *  device or display still unaccounted for. The machine is booting, so the
+   *  device, display or audio endpoint still unaccounted for. The machine is booting, so the
    *  guard is held rather than reported as a fault: the tile reads "Starting
    *  Up" instead of degraded, and no alert fires until the window closes. */
   Initialising?: boolean;
@@ -231,6 +290,8 @@ export interface ClientView {
   CriticalDisplayIDs?: string[];
   MissingCriticalDisplays?: MissingCriticalDisplay[];
   MismatchedCriticalDisplays?: MismatchedCriticalDisplay[];
+  AudioDevices?: AudioDevicesView;
+  CriticalAudioDevices?: CriticalAudioDevice[];
 }
 
 /** Renderer-facing group. */
@@ -1281,6 +1342,12 @@ export interface ClientUSBHistorySeries {
 
 export interface ClientDisplayHistorySeries {
   DisplayID: string;
+  Name: string;
+  samples: HistorySample[];
+}
+
+export interface ClientAudioHistorySeries {
+  EndpointID: string;
   Name: string;
   samples: HistorySample[];
 }
