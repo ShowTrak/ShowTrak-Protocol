@@ -23,14 +23,52 @@ import type { Vitals } from './vitals';
 import type { IntegratedAction } from './integrated';
 
 /**
+ * The conditions a critical USB device (by serial or by name) must keep. A
+ * guarded value is null when it is not guarded.
+ */
+export interface CriticalUSBConditions {
+  /** Fault when it is not connected (by name: fewer than `Quantity` connected). */
+  RequirePresent: boolean;
+  /**
+   * The port it must be plugged into (`USBDevice.Location`). By name: the ports
+   * the group occupies, comma-separated, and none of its devices may sit elsewhere.
+   */
+  Location: string | null;
+  /** The firmware it must report (`USBDevice.FirmwareVersion`). */
+  FirmwareVersion: string | null;
+  /** Fault when Windows reports a device problem. Never judged where it is not reported. */
+  RequireNoError: boolean;
+}
+
+/**
  * A user-marked critical USB device (the persisted "expected" association).
  * Emitted in `ClientView.CriticalUSBDevices`.
  */
-export interface CriticalUSBDevice {
+export interface CriticalUSBDevice extends CriticalUSBConditions {
   SerialNumber: string;
   ManufacturerName: string | null;
   ProductName: string | null;
   Timestamp: number | null;
+}
+
+/** Why a critical USB device is not in its expected state. */
+export type USBIssueKind = 'missing' | 'location' | 'firmware' | 'device_error';
+
+export interface USBIssue {
+  Kind: USBIssueKind;
+  /** Operator-facing sentence, e.g. "Plugged into Bus 1 · Port 3 (expected Bus 1 · Port 2.4)". */
+  Message: string;
+}
+
+/**
+ * What a client's USB reports can say beyond the devices themselves: whether it
+ * reports each property at all. A client before 3.21.0 reports none of them.
+ */
+export interface USBCapabilities {
+  Location: boolean;
+  FirmwareVersion: boolean;
+  /** Windows clients only. */
+  DeviceState: boolean;
 }
 
 /**
@@ -51,7 +89,7 @@ export interface MissingCriticalUSBDevice {
  * (Manufacturer + Product) and an expected Quantity rather than a serial number.
  * Emitted in `ClientView.CriticalUSBNames`.
  */
-export interface CriticalUSBName {
+export interface CriticalUSBName extends CriticalUSBConditions {
   NameKey: string;
   ManufacturerName: string | null;
   ProductName: string | null;
@@ -101,21 +139,48 @@ export interface MissingCriticalApplication {
 }
 
 /**
- * A user-marked critical display (the persisted "expected" configuration).
- * Emitted in `ClientView.CriticalDisplays`.
+ * A user-marked critical display: the baseline captured when it was marked, and
+ * the conditions it must keep. Emitted in `ClientView.CriticalDisplays`.
+ *
+ * `DisplayID` is the identity it was marked under (see `ClientDisplay.DisplayID`);
+ * the server still recognises the display when the client later reports it under
+ * a different tier of identity, so a critical display is matched rather than
+ * looked up. Each guarded property is null when it is not guarded; `Width` and
+ * `Height` are set together, and so are `PositionX` and `PositionY`.
  */
 export interface CriticalDisplay {
   DisplayID: string;
   Label: string | null;
+  /** Fault when the display is not connected. */
+  RequirePresent: boolean;
+  /** Resolution in physical pixels: `ClientDisplay.Width`/`Height` × `ScaleFactor`. */
   Width: number | null;
   Height: number | null;
+  /** Whole hertz. */
   RefreshRate: number | null;
   ScaleFactor: number | null;
+  /** Degrees: 0, 90, 180 or 270. */
+  Rotation: number | null;
+  /** Fault when another display is the primary one. */
+  RequirePrimary: boolean;
+  /** Top-left corner in the desktop arrangement (`ClientDisplay.Bounds.x`/`y`). */
+  PositionX: number | null;
+  PositionY: number | null;
   Timestamp: number | null;
 }
 
+/** Why a critical display is not in its expected state. */
+export type DisplayIssueKind =
+  'missing' | 'resolution' | 'refresh_rate' | 'scale' | 'rotation' | 'primary' | 'position';
+
+export interface DisplayIssue {
+  Kind: DisplayIssueKind;
+  /** Operator-facing sentence, e.g. "Refresh rate is 30 Hz (expected 60 Hz)". */
+  Message: string;
+}
+
 /**
- * A critical display that is currently NOT connected.
+ * A critical display that is currently NOT connected and is required to be.
  * Emitted in `ClientView.MissingCriticalDisplays`.
  */
 export interface MissingCriticalDisplay {
@@ -125,17 +190,20 @@ export interface MissingCriticalDisplay {
   Height: number | null;
   RefreshRate: number | null;
   ScaleFactor: number | null;
+  Rotation: number | null;
   IsConnected: false;
   IsCritical: true;
   Missing: true;
   Mismatch: false;
+  Issues: DisplayIssue[];
+  Critical: CriticalDisplay;
   CurrentSignature: null;
   ExpectedSignature: string;
 }
 
 /**
- * A connected display whose current configuration differs from its critical
- * baseline. Carries the full {@link ClientDisplay} plus the diff annotations.
+ * A connected critical display breaking one or more of its conditions. Carries
+ * the full {@link ClientDisplay} plus the judgement.
  * Emitted in `ClientView.MismatchedCriticalDisplays`.
  */
 export interface MismatchedCriticalDisplay extends ClientDisplay {
@@ -143,6 +211,8 @@ export interface MismatchedCriticalDisplay extends ClientDisplay {
   IsCritical: boolean;
   Missing: false;
   Mismatch: boolean;
+  Issues: DisplayIssue[];
+  Critical: CriticalDisplay | null;
   CurrentSignature: string;
   ExpectedSignature: string | null;
 }
@@ -213,6 +283,12 @@ export interface CriticalNetworkInterface {
   Name: string;
   /** The MAC it had when marked, for display; not a condition. */
   MAC: string | null;
+  /**
+   * The address family it is monitored under: which list it lives in, and the
+   * family a first mark captured its address from. Null on entries saved before
+   * it was recorded; those take it from the address they guard.
+   */
+  Family: 'IPv4' | 'IPv6' | null;
   /** Fault when the interface is not reported (cable out, adapter gone). */
   RequirePresent: boolean;
   /** The interface must carry exactly this address. */
@@ -278,6 +354,12 @@ export interface NetworkStatusView {
 export interface USBDeviceView extends USBDevice {
   IsCritical?: boolean;
   IsConnected?: boolean;
+  /** Connected and critical, but breaking a condition other than presence. */
+  Mismatch?: boolean;
+  /** Empty for a healthy or non-critical device. */
+  Issues?: USBIssue[];
+  /** The critical entry (by serial or by name) this device is guarded by. */
+  Critical?: CriticalUSBDevice | CriticalUSBName | null;
   // Serial-less name-based guarding annotations (see CriticalUSBName).
   IsCriticalByName?: boolean;
   NameKey?: string;
@@ -287,8 +369,25 @@ export interface USBDeviceView extends USBDevice {
   Missing?: boolean;
 }
 
+/**
+ * A display as serialized to the renderer in `ClientView.DisplayList`: one the
+ * client reported (`IsConnected`), or a critical one it did not, which then
+ * carries its baseline values and none of the live-only fields.
+ */
 export interface ClientDisplayView extends ClientDisplay {
   IsCritical?: boolean;
+  IsConnected?: boolean;
+  /** Critical, required to be connected, and not reported on a connection that has reported its displays. */
+  Missing?: boolean;
+  /** Connected and critical, but breaking a condition. */
+  Mismatch?: boolean;
+  /** Empty for a healthy or non-critical display. */
+  Issues?: DisplayIssue[];
+  /** The critical entry this display was matched to. Its `DisplayID` may differ from the display's own. */
+  Critical?: CriticalDisplay | null;
+  /** "WIDTHxHEIGHT@HZ" in physical pixels, kept for older consumers; `Issues` is the judgement. */
+  CurrentSignature?: string | null;
+  ExpectedSignature?: string | null;
 }
 
 export interface RunningApplicationViewItem extends RunningApplicationItem {
@@ -338,6 +437,8 @@ export interface ClientView {
   MissingCriticalUSBDevices?: MissingCriticalUSBDevice[];
   CriticalUSBNames?: CriticalUSBName[];
   MissingCriticalUSBNames?: MissingCriticalUSBName[];
+  /** Null until this connection has reported its USB devices. */
+  USBCapabilities?: USBCapabilities | null;
   Degraded?: boolean;
   DegradedWarnings?: string[];
   /** Online, but inside its start-up window with a critical application, USB

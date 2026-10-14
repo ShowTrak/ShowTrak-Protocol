@@ -92,11 +92,56 @@ export interface CriticalAudioDevicePayload {
 }
 
 /**
+ * The conditions a USB mark request may set. Omitted options keep their current
+ * value (or, on a first mark, the default: connected, plus no device error where
+ * the client reports it). A `Check*` option guards the value the device has when
+ * it is first ticked; false stops guarding it.
+ */
+export interface CriticalUSBConditionOptions {
+  RequirePresent?: boolean;
+  CheckLocation?: boolean;
+  CheckFirmware?: boolean;
+  RequireNoError?: boolean;
+}
+
+/** Payload of `MarkClientUSBDeviceCritical`. */
+export interface CriticalUSBDevicePayload extends CriticalUSBConditionOptions {
+  SerialNumber: string;
+  ManufacturerName?: string;
+  ProductName?: string;
+}
+
+/** Payload of `MarkClientUSBNameCritical` (and `RemoveClientUSBNameCritical`, which reads only the names). */
+export interface CriticalUSBNamePayload extends CriticalUSBConditionOptions {
+  ManufacturerName?: string;
+  ProductName?: string;
+}
+
+/**
+ * Payload of `MarkClientDisplayCritical`. Omitted options keep their current
+ * value (or, on a first mark, the default: connected, resolution and refresh
+ * rate). A `Check*` option guards the value the display has when it is first
+ * ticked; false stops guarding it.
+ */
+export interface CriticalDisplayPayload {
+  DisplayID: string;
+  RequirePresent?: boolean;
+  RequirePrimary?: boolean;
+  CheckResolution?: boolean;
+  CheckRefreshRate?: boolean;
+  CheckScale?: boolean;
+  CheckRotation?: boolean;
+  CheckPosition?: boolean;
+}
+
+/**
  * Payload of `MarkClientNetworkInterfaceCritical`. Omitted options keep their
  * current value; null stops guarding that property.
  */
 export interface CriticalNetworkInterfacePayload {
   Name: string;
+  /** The family it is marked under; a first mark captures that family's address. */
+  Family?: 'IPv4' | 'IPv6';
   RequirePresent?: boolean;
   Address?: string | null;
   /** Sent together: both set, or both null. */
@@ -173,16 +218,25 @@ export interface ShowTrakAPI {
   GetClientAudioHistory(UUID: string): Promise<ClientAudioHistorySeries[]>;
   GetClientNetworkHistory(UUID: string): Promise<ClientNetworkHistorySeries[]>;
   UpdateClient(UUID: string, Data: Record<string, unknown>): Promise<ResultTuple<unknown>>;
-  MarkClientUSBDeviceCritical(UUID: string, Device: unknown): Promise<ResultTuple<unknown>>;
+  MarkClientUSBDeviceCritical(
+    UUID: string,
+    Device: CriticalUSBDevicePayload
+  ): Promise<ResultTuple<unknown>>;
   RemoveClientUSBDeviceCritical(UUID: string, SerialNumber: string): Promise<ResultTuple<unknown>>;
-  MarkClientUSBNameCritical(UUID: string, Device: unknown): Promise<ResultTuple<unknown>>;
+  MarkClientUSBNameCritical(
+    UUID: string,
+    Device: CriticalUSBNamePayload
+  ): Promise<ResultTuple<unknown>>;
   RemoveClientUSBNameCritical(UUID: string, Device: unknown): Promise<ResultTuple<unknown>>;
   MarkClientApplicationCritical(UUID: string, Application: unknown): Promise<ResultTuple<unknown>>;
   RemoveClientApplicationCritical(
     UUID: string,
     ApplicationName: string
   ): Promise<ResultTuple<unknown>>;
-  MarkClientDisplayCritical(UUID: string, Display: unknown): Promise<ResultTuple<unknown>>;
+  MarkClientDisplayCritical(
+    UUID: string,
+    Display: CriticalDisplayPayload
+  ): Promise<ResultTuple<unknown>>;
   RemoveClientDisplayCritical(UUID: string, DisplayID: string): Promise<ResultTuple<unknown>>;
   /**
    * Mark an audio endpoint critical, or update the conditions it is guarded by.

@@ -18,8 +18,24 @@ export interface SystemInfoPayload {
 }
 
 /**
+ * A USB device's Windows Plug and Play state (Device Manager's yellow bang).
+ * `ErrorCode` is the Configuration Manager problem code: 0 when the device is
+ * working, e.g. 10 "cannot start", 28 "drivers not installed", 43 "stopped".
+ */
+export interface USBDeviceState {
+  ErrorCode: number;
+  /** Operator-facing description of a non-zero code; null when working. */
+  Message: string | null;
+}
+
+/**
  * A USB device as formatted by the client's USB monitor.
  * Fields may be `undefined` when WebUSB cannot read a descriptor.
+ *
+ * `Location`, `FirmwareVersion` and `DeviceState` arrived with ShowTrak Client
+ * 3.21.0. A key that is ABSENT means the client cannot report it at all (an
+ * older client, or `DeviceState` off Windows); null means it can, but could not
+ * for this device this time. Neither is ever a fault.
  */
 export interface USBDevice {
   VendorID?: number;
@@ -27,6 +43,12 @@ export interface USBDevice {
   ManufacturerName?: string | null;
   ProductName?: string | null;
   SerialNumber?: string | null;
+  /** Where it is plugged in: "BUS-PORT[.PORT…]", the path through any hubs, e.g. "1-2.4". */
+  Location?: string | null;
+  /** The device's release number (bcdDevice), e.g. "1.23". */
+  FirmwareVersion?: string | null;
+  /** Windows only. */
+  DeviceState?: USBDeviceState | null;
 }
 
 /** Source tier used to derive a reboot-stable display identity. */
