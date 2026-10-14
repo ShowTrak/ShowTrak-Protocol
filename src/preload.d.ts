@@ -27,6 +27,7 @@ import type {
   AudioAssetView,
   ClientApplicationHistorySeries,
   ClientAudioHistorySeries,
+  ClientNetworkHistorySeries,
   ClientDisplayHistorySeries,
   ClientUSBHistorySeries,
   ClientView,
@@ -88,6 +89,21 @@ export interface CriticalAudioDevicePayload {
   /** Guard the channel count / sample rate the endpoint has right now. */
   CheckChannels?: boolean;
   CheckSampleRate?: boolean;
+}
+
+/**
+ * Payload of `MarkClientNetworkInterfaceCritical`. Omitted options keep their
+ * current value; null stops guarding that property.
+ */
+export interface CriticalNetworkInterfacePayload {
+  Name: string;
+  RequirePresent?: boolean;
+  Address?: string | null;
+  /** Sent together: both set, or both null. */
+  RangeStart?: string | null;
+  RangeEnd?: string | null;
+  Netmask?: string | null;
+  Gateway?: string | null;
 }
 
 /** Unsubscribe handle returned by every `subscribe`-backed API method. */
@@ -155,6 +171,7 @@ export interface ShowTrakAPI {
   GetClientUSBHistory(UUID: string): Promise<ClientUSBHistorySeries[]>;
   GetClientDisplayHistory(UUID: string): Promise<ClientDisplayHistorySeries[]>;
   GetClientAudioHistory(UUID: string): Promise<ClientAudioHistorySeries[]>;
+  GetClientNetworkHistory(UUID: string): Promise<ClientNetworkHistorySeries[]>;
   UpdateClient(UUID: string, Data: Record<string, unknown>): Promise<ResultTuple<unknown>>;
   MarkClientUSBDeviceCritical(UUID: string, Device: unknown): Promise<ResultTuple<unknown>>;
   RemoveClientUSBDeviceCritical(UUID: string, SerialNumber: string): Promise<ResultTuple<unknown>>;
@@ -177,6 +194,15 @@ export interface ShowTrakAPI {
     Device: CriticalAudioDevicePayload
   ): Promise<ResultTuple<unknown>>;
   RemoveClientAudioDeviceCritical(UUID: string, EndpointID: string): Promise<ResultTuple<unknown>>;
+  /**
+   * Mark a network interface critical, or update the conditions it is guarded
+   * by. A first mark captures the interface's current address, mask and router.
+   */
+  MarkClientNetworkInterfaceCritical(
+    UUID: string,
+    Interface: CriticalNetworkInterfacePayload
+  ): Promise<ResultTuple<unknown>>;
+  RemoveClientNetworkInterfaceCritical(UUID: string, Name: string): Promise<ResultTuple<unknown>>;
   /** Change an endpoint's level and/or mute on the client machine. */
   SetClientAudioLevel(UUID: string, Request: AudioLevelRequest): Promise<ResultTuple<boolean>>;
   /** Manually record an extra MAC address against a client. Resolves Ok(true)

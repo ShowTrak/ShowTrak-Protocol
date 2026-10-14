@@ -96,6 +96,13 @@ export interface NetworkInterfaceAddress {
 export interface NetworkInterface {
   name: string;
   addresses: NetworkInterfaceAddress[];
+  /**
+   * The IPv4 default gateway (router) reached through this interface, or null
+   * when it has none. ABSENT when the client cannot tell — an older client, or
+   * one whose routing table has never been readable — which the server reads
+   * as "unknown", never as "no router".
+   */
+  gateway?: string | null;
 }
 
 export interface RunningApplicationItem {

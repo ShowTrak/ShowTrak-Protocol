@@ -17,6 +17,7 @@ import type {
   AudioDirection,
   AudioEndpoint,
   AudioMonitorStatus,
+  NetworkInterfaceAddress,
 } from './telemetry';
 import type { Vitals } from './vitals';
 import type { IntegratedAction } from './integrated';
@@ -202,6 +203,75 @@ export interface AudioDevicesView {
 }
 
 /**
+ * A user-marked critical network interface, keyed by interface name, and the
+ * conditions it must keep. Emitted in `ClientView.CriticalNetworkInterfaces`.
+ *
+ * Every address condition is null when it is not guarded. `RangeStart` and
+ * `RangeEnd` are set together or not at all.
+ */
+export interface CriticalNetworkInterface {
+  Name: string;
+  /** The MAC it had when marked, for display; not a condition. */
+  MAC: string | null;
+  /** Fault when the interface is not reported (cable out, adapter gone). */
+  RequirePresent: boolean;
+  /** The interface must carry exactly this address. */
+  Address: string | null;
+  /** The interface must carry an address inside this inclusive range. */
+  RangeStart: string | null;
+  RangeEnd: string | null;
+  /** An address of this family must have this subnet mask. */
+  Netmask: string | null;
+  /** The interface's default gateway must be this router. */
+  Gateway: string | null;
+  Timestamp: number | null;
+}
+
+/** Why a critical network interface is not in its expected state. */
+export type NetworkIssueKind = 'missing' | 'address' | 'range' | 'netmask' | 'gateway';
+
+export interface NetworkIssue {
+  Kind: NetworkIssueKind;
+  /** Operator-facing sentence, e.g. "Subnet mask is 255.255.0.0 (expected 255.255.255.0)". */
+  Message: string;
+}
+
+/**
+ * A network interface as serialized to the renderer: one the client reported
+ * (`IsConnected`), or a critical one it did not (`Missing`), which then carries
+ * an empty address list.
+ */
+export interface NetworkInterfaceView {
+  Name: string;
+  MAC: string | null;
+  /** Loopback and the like. Never offered for critical monitoring. */
+  Internal: boolean;
+  Addresses: NetworkInterfaceAddress[];
+  /** Null when there is none, or when `Capabilities.Router` says it cannot be read. */
+  Gateway: string | null;
+  IsConnected: boolean;
+  IsCritical: boolean;
+  Missing: boolean;
+  /** Empty for a healthy or non-critical interface. */
+  Issues: NetworkIssue[];
+  Critical: CriticalNetworkInterface | null;
+}
+
+/** What the client's network report can say beyond the interfaces themselves. */
+export interface NetworkCapabilities {
+  /** Whether the client reports each interface's router. */
+  Router: boolean;
+}
+
+/** `ClientView.NetworkStatus`: the interfaces judged against their critical baselines. */
+export interface NetworkStatusView {
+  /** Null until this connection has reported its interfaces. */
+  SampledAt: number | null;
+  Capabilities: NetworkCapabilities | null;
+  Interfaces: NetworkInterfaceView[];
+}
+
+/**
  * Telemetry list elements as *serialized* to the renderer: the raw wire shapes
  * enriched in-place by the Client class's critical-marking machinery.
  */
@@ -292,6 +362,8 @@ export interface ClientView {
   MismatchedCriticalDisplays?: MismatchedCriticalDisplay[];
   AudioDevices?: AudioDevicesView;
   CriticalAudioDevices?: CriticalAudioDevice[];
+  NetworkStatus?: NetworkStatusView;
+  CriticalNetworkInterfaces?: CriticalNetworkInterface[];
 }
 
 /** Renderer-facing group. */
@@ -1348,6 +1420,13 @@ export interface ClientDisplayHistorySeries {
 
 export interface ClientAudioHistorySeries {
   EndpointID: string;
+  Name: string;
+  samples: HistorySample[];
+}
+
+/** One critical network interface's timeline; keyed by interface name. */
+export interface ClientNetworkHistorySeries {
+  InterfaceName: string;
   Name: string;
   samples: HistorySample[];
 }
