@@ -68,6 +68,7 @@ import type {
   SettingGroupView,
   SettingView,
   ShowTrakAlert,
+  StatusHistoryOverview,
   TagDisplayMode,
   TagScope,
   TagView,
@@ -233,6 +234,8 @@ export interface ShowTrakAPI {
   // Returns the client object directly (or null); NOT a Result tuple.
   GetClient(UUID: string): Promise<ClientView | null>;
   GetClientHistory(UUID: string): Promise<HistorySample[]>;
+  // Every row's overall-status history for the list view, in one read.
+  GetStatusHistoryOverview(): Promise<StatusHistoryOverview>;
   GetClientApplicationHistory(UUID: string): Promise<ClientApplicationHistorySeries[]>;
   GetClientUSBHistory(UUID: string): Promise<ClientUSBHistorySeries[]>;
   GetClientDisplayHistory(UUID: string): Promise<ClientDisplayHistorySeries[]>;
@@ -417,12 +420,17 @@ export interface ShowTrakAPI {
   MonitoringTargetUpdated(callback: (target: MonitoringTargetView) => void): Unsubscribe;
 
   // ---- Monitoring check actions ------------------------------------------
-  /** Fan one action out across every selected target that has a check of that method. */
+  /**
+   * Fan one action out across every selected target that has a check of that
+   * method. `CheckIDs`, when given, narrows it to just those checks (the list
+   * view's check rows); omitted, every check of the method on each target runs.
+   */
   RunMonitoringAction(
     TargetIDs: number[],
     Method: string,
     ActionID: string,
-    Params?: Record<string, unknown>
+    Params?: Record<string, unknown>,
+    CheckIDs?: number[] | null
   ): Promise<ResultTuple<MonitoringActionSummary>>;
   GetMonitoringActionFavourites(): Promise<MonitoringActionFavouriteView[]>;
   /** Star or unstar one action+parameter combination. Starring twice is a no-op. */

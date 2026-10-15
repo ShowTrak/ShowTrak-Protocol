@@ -1629,6 +1629,23 @@ export interface DebugTrafficEntry {
 
 // ---- Client history -------------------------------------------------------
 
+/**
+ * The recent overall-status history of everything on the page, in one read
+ * (GetStatusHistoryOverview). Each map is keyed by the entity's id as a string:
+ * a client or dummy UUID, a monitoring CheckID, a FreeKiosk terminal UUID.
+ *
+ * Checks rather than targets, because a target's overall timeline is combined
+ * from its checks by the renderer. Kiosks carry their poll-latency series (the
+ * reachability series their status timeline is drawn from), including the one
+ * sample just before the window that a flat run is carried forward from.
+ */
+export interface StatusHistoryOverview {
+  Clients: Record<string, HistorySample[]>;
+  Dummies: Record<string, HistorySample[]>;
+  Checks: Record<string, HistorySample[]>;
+  Kiosks: Record<string, FreeKioskMetricSample[]>;
+}
+
 export interface ClientApplicationHistorySeries {
   Key: string;
   Name: string;
