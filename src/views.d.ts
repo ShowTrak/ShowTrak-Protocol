@@ -428,6 +428,9 @@ export interface ClientView {
   MacAddresses?: ClientMacAddressView[];
   RunOnLaunchScriptID?: string | null;
   RunOnLaunchDelaySeconds?: number | null;
+  /** Seconds a disconnect is tolerated before the client reads offline; null
+   *  inherits the CLIENT_OFFLINE_GRACE_SECONDS setting. */
+  OfflineGraceSeconds?: number | null;
   Online?: boolean;
   LastSeen?: number;
   Vitals?: Vitals | null;
