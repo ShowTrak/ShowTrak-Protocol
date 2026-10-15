@@ -147,7 +147,7 @@ export interface RunningApplicationItem {
  * with every snapshot and delta so the server can say "not available on this
  * operating system" from the client's own word.
  *
- * Absent on clients before 3.22.0, which report neither.
+ * Absent on clients before 3.27.0, which report neither.
  */
 export interface RunningApplicationsCapabilities {
   /** Hung-application detection (Windows: the window manager's verdict). */
@@ -375,7 +375,7 @@ export interface ApplicationDelta {
 // --- Power and temperatures --------------------------------------------------
 //
 // Both are small full snapshots, sent on connect, on every change and on a slow
-// keepalive. Absent on clients before 3.22.0: the server reads "no report" as
+// keepalive. Absent on clients before 3.27.0: the server reads "no report" as
 // "cannot tell", never as a fault.
 
 /**

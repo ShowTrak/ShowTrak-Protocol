@@ -1627,6 +1627,29 @@ export interface DebugTrafficEntry {
   source?: string | null;
 }
 
+/** One server log line, as streamed to an open log console. */
+export interface LogConsoleEntry {
+  /** Monotonic per server run; a viewer drops live lines it already holds. */
+  Seq: number;
+  /** Epoch ms. */
+  Time: number;
+  /** 'error' | 'warn' | 'info' | 'debug' | 'trace'. */
+  Level: string;
+  /** The logger's label: Info, Warn, Error, Debug, Trace, Success or Database. */
+  Type: string;
+  /** The module that logged it. */
+  Alias: string;
+  Message: string;
+}
+
+/** What opening (or re-levelling) the log console returns. */
+export interface LogConsoleSnapshot {
+  /** The level the server settled on (an unknown level falls back to 'info'). */
+  Level: string;
+  /** The recent lines at that level, oldest first. */
+  Entries: LogConsoleEntry[];
+}
+
 // ---- Client history -------------------------------------------------------
 
 /**

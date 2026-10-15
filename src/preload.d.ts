@@ -35,6 +35,8 @@ import type {
   ClientVitalsHistory,
   ClientSystemCheckHistorySeries,
   DebugTrafficEntry,
+  LogConsoleEntry,
+  LogConsoleSnapshot,
   DummyClientDefaults,
   DummyClientView,
   FogHostView,
@@ -564,4 +566,18 @@ export interface ShowTrakAPI {
   OpenAudioAssetsFolder(): Promise<unknown>;
   PlayCustomAudio(callback: (payload: AudioAssetData) => void): Unsubscribe;
   OnAudioAssetsUpdated(callback: (assets?: unknown) => void): Unsubscribe;
+
+  // ---- Log console --------------------------------------------------------
+  // Lines are streamed only between Open and Close, at or above the given
+  // level. Opening again with another level re-levels and returns a fresh
+  // backlog. Null when the surface cannot stream (no sender to target).
+  OpenLogConsole(Level: string): Promise<LogConsoleSnapshot | null>;
+  CloseLogConsole(): Promise<unknown>;
+  OnLogConsoleEntries(callback: (entries: LogConsoleEntry[]) => void): Unsubscribe;
+
+  // ---- Rainbow Mode ---------------------------------------------------------
+  // One in-memory flag shared by every surface; never persisted, off at boot.
+  GetRainbowMode(): Promise<boolean>;
+  SetRainbowMode(Enabled: boolean): Promise<boolean>;
+  OnRainbowModeUpdated(callback: (Enabled: boolean) => void): Unsubscribe;
 }

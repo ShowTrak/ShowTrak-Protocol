@@ -13,7 +13,7 @@ export interface RamVitals {
    * Used physical memory in bytes. On macOS this is what Activity Monitor
    * calls "Memory Used" (app + wired + compressed): the kernel's free count
    * excludes reclaimable cache, so `total - free` read close to 100% on any
-   * Mac that had been up for a while. Clients before 3.22.0 sent that figure.
+   * Mac that had been up for a while. Clients before 3.27.0 sent that figure.
    */
   Used: number;
   /**
@@ -27,7 +27,7 @@ export interface UptimeVitals {
   /** Operating-system uptime formatted as `HH:mm:ss`; hours are unbounded. */
   Formatted: string;
   /**
-   * Operating-system uptime in whole seconds. Added in ShowTrak Client 3.22.0;
+   * Operating-system uptime in whole seconds. Added in ShowTrak Client 3.27.0;
    * an older client omits it, and readers fall back to parsing `Formatted`.
    */
   Seconds?: number;
