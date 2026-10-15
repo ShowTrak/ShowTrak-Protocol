@@ -16,6 +16,8 @@ import type {
   AudioDevicesSnapshot,
   AudioLevelRequest,
   AudioLevelResult,
+  PowerStatusSnapshot,
+  TemperaturesSnapshot,
 } from './telemetry';
 import type { AdoptionHeartbeatPayload, UnadoptPayload, IdentifyPayload } from './adoption';
 import type { IntegratedAction, IntegratedState } from './integrated';
@@ -60,6 +62,13 @@ export interface ClientToServerEvents {
   RunningApplications: (snapshot: RunningApplicationsSnapshot) => void;
   /** Audio endpoints. A full snapshot on every change, plus a keepalive. */
   AudioDevices: (snapshot: AudioDevicesSnapshot) => void;
+  /**
+   * Battery, mains power and sleep/resume. A full snapshot on every change
+   * (including the moment the machine suspends or wakes), plus a keepalive.
+   */
+  PowerStatus: (snapshot: PowerStatusSnapshot) => void;
+  /** Temperature sensors and thermal pressure. A full snapshot on change, plus a keepalive. */
+  Temperatures: (snapshot: TemperaturesSnapshot) => void;
   /**
    * Ask what the server understands. A server that predates this event never
    * invokes the callback, which is how the client detects an older server and

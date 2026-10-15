@@ -18,6 +18,10 @@ import type {
   AudioEndpoint,
   AudioMonitorStatus,
   NetworkInterfaceAddress,
+  PowerStatusSnapshot,
+  RunningApplicationsCapabilities,
+  TemperaturesSnapshot,
+  ThermalState,
 } from './telemetry';
 import type { Vitals } from './vitals';
 import type { IntegratedAction } from './integrated';
@@ -123,6 +127,17 @@ export interface CriticalApplication {
   Name: string;
   Key: string;
   Timestamp: number | null;
+  /**
+   * Fault when another application holds the focused window. Only judged on
+   * a client that can report the foreground application. Absent on rows
+   * written before this condition existed, which read as false.
+   */
+  RequireForeground?: boolean;
+  /**
+   * Fault when its windows stop answering the operating system. Only judged on
+   * a client that can detect hung applications. Absent reads as true.
+   */
+  RequireResponding?: boolean;
 }
 
 /**
@@ -136,6 +151,8 @@ export interface MissingCriticalApplication {
   IsRunning: false;
   IsCritical: true;
   Missing: true;
+  RequireForeground?: boolean;
+  RequireResponding?: boolean;
 }
 
 /**
@@ -394,6 +411,12 @@ export interface RunningApplicationViewItem extends RunningApplicationItem {
   Key?: string;
   IsCritical?: boolean;
   IsRunning?: boolean;
+  /** Owns the focused window. Only ever true where the client reports it. */
+  IsForeground?: boolean;
+  /** Monitored and required to hold the foreground (see CriticalApplication). */
+  RequireForeground?: boolean;
+  /** Monitored and required to respond (see CriticalApplication). */
+  RequireResponding?: boolean;
 }
 
 export interface RunningApplicationsView {
@@ -403,6 +426,94 @@ export interface RunningApplicationsView {
   Items: RunningApplicationViewItem[];
   Status?: RunningApplicationsStatus;
   NoChanges?: boolean;
+  /** Absent when the client cannot report it; see RunningApplicationsSnapshot. */
+  Foreground?: string | null;
+  /** Absent for clients that predate hung and foreground detection. */
+  Capabilities?: RunningApplicationsCapabilities | null;
+}
+
+/**
+ * The machine-wide checks a client can be monitored on, one card each in the
+ * view modal. Every one is opt-in per client, exactly like a monitored display:
+ * nothing is judged until an operator monitors it.
+ */
+export type ClientSystemCheckKey = 'cpu' | 'ram' | 'uptime' | 'power' | 'thermal';
+
+/** CPU or memory usage. */
+export interface ClientUsageCheck {
+  /** Usage, 0-100, ABOVE which the client is in alarm. Null = not guarded. */
+  MaxPercent: number | null;
+  /**
+   * How long usage must stay over the limit before the alarm is raised, and
+   * back under it before the alarm clears. Spikes shorter than this are ignored.
+   */
+  SustainSeconds: number;
+}
+
+/** Time since the operating system last booted. */
+export interface ClientUptimeCheck {
+  /** Days of uptime ABOVE which the client is in alarm (a restart is due). Null = not guarded. */
+  MaxDays: number | null;
+}
+
+/** Mains, battery charge and charging. */
+export interface ClientPowerCheck {
+  /** Fault while the machine runs from its battery. */
+  RequireMains: boolean;
+  /** Battery charge, 0-100, BELOW which the client is in alarm while not charging. Null = not guarded. */
+  MinBatteryPercent: number | null;
+  /**
+   * Fault when the battery is not charging while its charge is BELOW this.
+   * A battery that is full (or held at a level by the operating system's
+   * battery-care charging) reports "not charging", so this is a level rather
+   * than a yes/no. Null = not guarded.
+   */
+  ChargingBelowPercent: number | null;
+}
+
+/** Temperature sensors and the operating system's thermal verdict. */
+export interface ClientThermalCheck {
+  /** Hottest sensor, in °C, ABOVE which the client is in alarm. Null = not guarded. */
+  MaxCelsius: number | null;
+  /**
+   * The highest thermal state still acceptable; anything beyond it is a fault.
+   * 'fair' tolerates mild pressure and alarms once the machine throttles.
+   * Only macOS reports a thermal state. Null = not guarded.
+   */
+  MaxThermalState: Exclude<ThermalState, 'critical'> | null;
+}
+
+/** A client's monitored system checks. A null check is not monitored. */
+export interface ClientSystemChecks {
+  Cpu: ClientUsageCheck | null;
+  Ram: ClientUsageCheck | null;
+  Uptime: ClientUptimeCheck | null;
+  Power: ClientPowerCheck | null;
+  Thermal: ClientThermalCheck | null;
+}
+
+/** One condition of a monitored system check that can be in alarm. */
+export type ClientResourceAlarmKey =
+  'cpu' | 'ram' | 'uptime' | 'power' | 'battery' | 'charging' | 'temperature' | 'thermal';
+
+/** A system-check condition the client is currently failing. */
+export interface ClientResourceAlarm {
+  Key: ClientResourceAlarmKey;
+  /**
+   * The reading that raised (or most recently sustained) the alarm: a
+   * percentage, hours of uptime, °C, or a thermal state. Null when unknown.
+   */
+  Value: number | string | null;
+  /** The limit it broke, in the same unit. Null for a yes/no condition (mains). */
+  Threshold: number | string | null;
+  /** When the alarm was raised (ms since epoch). */
+  Since: number;
+}
+
+/** CPU and memory usage over the history window, for the view modal's charts. */
+export interface ClientVitalsHistory {
+  Cpu: FreeKioskMetricSample[];
+  Ram: FreeKioskMetricSample[];
 }
 
 /** Renderer-facing serialized client (superset across desktop + web surfaces). */
@@ -431,9 +542,23 @@ export interface ClientView {
   /** Seconds a disconnect is tolerated before the client reads offline; null
    *  inherits the CLIENT_OFFLINE_GRACE_SECONDS setting. */
   OfflineGraceSeconds?: number | null;
+  /** The monitored system checks (CPU, memory, uptime, power, thermal). */
+  SystemChecks?: ClientSystemChecks;
+  /** System-check conditions currently failing. Empty while healthy or offline. */
+  ResourceAlarms?: ClientResourceAlarm[];
   Online?: boolean;
   LastSeen?: number;
   Vitals?: Vitals | null;
+  /**
+   * When the client's operating system last booted (ms since epoch), derived
+   * from its reported uptime. Null until a heartbeat carrying uptime arrives;
+   * retained while offline so the last known boot stays visible.
+   */
+  BootTime?: number | null;
+  /** Battery, mains and sleep/resume. Null until the client reports it. */
+  PowerStatus?: PowerStatusSnapshot | null;
+  /** Temperature sensors. Null until the client reports them. */
+  Temperatures?: TemperaturesSnapshot | null;
   USBDeviceList?: USBDeviceView[];
   CriticalUSBDevices?: CriticalUSBDevice[];
   CriticalUSBSerials?: string[];
@@ -1531,6 +1656,13 @@ export interface ClientAudioHistorySeries {
 /** One critical network interface's timeline; keyed by interface name. */
 export interface ClientNetworkHistorySeries {
   InterfaceName: string;
+  Name: string;
+  samples: HistorySample[];
+}
+
+/** One monitored system check's healthy/failing timeline; keyed by check. */
+export interface ClientSystemCheckHistorySeries {
+  CheckKey: ClientSystemCheckKey;
   Name: string;
   samples: HistorySample[];
 }

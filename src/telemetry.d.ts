@@ -130,6 +130,30 @@ export interface NetworkInterface {
 export interface RunningApplicationItem {
   Name: string;
   Count: number;
+  /**
+   * Whether the application's windows are answering the operating system.
+   * false means hung ("Not Responding"): the process is alive but frozen.
+   *
+   * ABSENT when the client cannot tell on this platform at all (see
+   * `RunningApplicationsCapabilities.Responding`); null when it can, but could
+   * not read this application this time. Neither is ever a fault. With several
+   * instances, false means at least one of them is hung.
+   */
+  Responding?: boolean | null;
+}
+
+/**
+ * What the client's application collector can report on this machine. Sent
+ * with every snapshot and delta so the server can say "not available on this
+ * operating system" from the client's own word.
+ *
+ * Absent on clients before 3.22.0, which report neither.
+ */
+export interface RunningApplicationsCapabilities {
+  /** Hung-application detection (Windows: the window manager's verdict). */
+  Responding: boolean;
+  /** Which application owns the focused window. */
+  Foreground: boolean;
 }
 
 /**
@@ -157,6 +181,14 @@ export interface RunningApplicationsSnapshot {
   Status: RunningApplicationsStatus;
   /** Present and `true` when the app set is unchanged (Items omitted). */
   NoChanges?: boolean;
+  /**
+   * Name of the application that owns the focused window, matching an `Items`
+   * entry's `Name` where it is listed. ABSENT when the client cannot report it
+   * (see `Capabilities.Foreground`); null when nothing is focused or the owner
+   * could not be read.
+   */
+  Foreground?: string | null;
+  Capabilities?: RunningApplicationsCapabilities;
 }
 
 // --- Audio devices -----------------------------------------------------------
@@ -331,6 +363,89 @@ export interface ApplicationDelta {
   TotalCount: number;
   Truncated: boolean;
   Status: RunningApplicationsStatus;
+  /**
+   * The focused application, carried on every delta (it changes far more often
+   * than the application set). Same meaning as the snapshot's field; absent
+   * when the client cannot report it.
+   */
+  Foreground?: string | null;
+  Capabilities?: RunningApplicationsCapabilities;
+}
+
+// --- Power and temperatures --------------------------------------------------
+//
+// Both are small full snapshots, sent on connect, on every change and on a slow
+// keepalive. Absent on clients before 3.22.0: the server reads "no report" as
+// "cannot tell", never as a fault.
+
+/**
+ * Health of one of the client's optional collectors. `unsupported` means this
+ * machine cannot report the domain at all (no battery API, no readable sensor),
+ * which the UI shows as "not available" rather than as a fault.
+ */
+export type CollectorState = 'unknown' | 'ok' | 'error' | 'unsupported';
+
+export interface CollectorStatus {
+  State: CollectorState;
+  Message: string | null;
+  /** Node's `process.platform` on the client. */
+  Platform: string;
+  /** The facility that answered, e.g. "wmi", "pmset", "sysfs". Null until one has. */
+  Backend: string | null;
+}
+
+/** The machine's internal battery. */
+export interface BatteryStatus {
+  /** Charge, 0-100. Null when unreadable. */
+  Percent: number | null;
+  /** Charging from mains. Null when the platform does not say. */
+  Charging: boolean | null;
+  /** Estimated minutes of runtime left while discharging; null otherwise. */
+  TimeRemainingMinutes: number | null;
+}
+
+/** Payload of the `PowerStatus` event. */
+export interface PowerStatusSnapshot {
+  SampledAt: number;
+  Status: CollectorStatus;
+  /** Null when the machine has no battery (a desktop) or it cannot be read. */
+  Battery: BatteryStatus | null;
+  /** Running from battery rather than mains. Null when unknown. */
+  OnBattery: boolean | null;
+  /**
+   * When the operating system last went to sleep and last woke, as observed by
+   * the client process (ms since epoch). Null until it has happened once while
+   * the client was running. A suspend is reported best-effort before the
+   * machine sleeps; the resume is always reported once the client reconnects.
+   */
+  LastSuspendAt: number | null;
+  LastResumeAt: number | null;
+}
+
+/** What a temperature sensor measures. */
+export type TemperatureSensorKind = 'cpu' | 'gpu' | 'system' | 'storage' | 'battery' | 'other';
+
+export interface TemperatureSensor {
+  /** Stable within a machine, e.g. "CPU Package", "GPU 0", "acpitz". */
+  Name: string;
+  Kind: TemperatureSensorKind;
+  Celsius: number;
+}
+
+/**
+ * The operating system's own verdict on thermal pressure. macOS reports this
+ * (and no temperatures without administrator tools); elsewhere it is null.
+ * `serious` and `critical` mean the machine is throttling to cool down.
+ */
+export type ThermalState = 'nominal' | 'fair' | 'serious' | 'critical';
+
+/** Payload of the `Temperatures` event. */
+export interface TemperaturesSnapshot {
+  SampledAt: number;
+  Status: CollectorStatus;
+  /** Empty when no sensor is readable; `Status` then says why. */
+  Sensors: TemperatureSensor[];
+  ThermalState: ThermalState | null;
 }
 
 /**

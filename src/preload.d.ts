@@ -31,6 +31,9 @@ import type {
   ClientDisplayHistorySeries,
   ClientUSBHistorySeries,
   ClientView,
+  ClientSystemCheckKey,
+  ClientVitalsHistory,
+  ClientSystemCheckHistorySeries,
   DebugTrafficEntry,
   DummyClientDefaults,
   DummyClientView,
@@ -132,6 +135,24 @@ export interface CriticalDisplayPayload {
   CheckScale?: boolean;
   CheckRotation?: boolean;
   CheckPosition?: boolean;
+}
+
+/**
+ * Payload of `MarkClientSystemCheck`. Monitoring a check that is not yet
+ * monitored with nothing but its `Key` ticks its usual conditions at their
+ * default limits. Otherwise omitted fields keep their current value, and null
+ * stops guarding that condition.
+ */
+export interface ClientSystemCheckPayload {
+  Key: ClientSystemCheckKey;
+  MaxPercent?: number | null;
+  SustainSeconds?: number;
+  MaxDays?: number | null;
+  RequireMains?: boolean;
+  MinBatteryPercent?: number | null;
+  ChargingBelowPercent?: number | null;
+  MaxCelsius?: number | null;
+  MaxThermalState?: 'nominal' | 'fair' | 'serious' | null;
 }
 
 /**
@@ -257,6 +278,16 @@ export interface ShowTrakAPI {
     Interface: CriticalNetworkInterfacePayload
   ): Promise<ResultTuple<unknown>>;
   RemoveClientNetworkInterfaceCritical(UUID: string, Name: string): Promise<ResultTuple<unknown>>;
+  /** Monitor a system check (CPU, memory, uptime, power, thermal), or change its conditions. */
+  MarkClientSystemCheck(
+    UUID: string,
+    Check: ClientSystemCheckPayload
+  ): Promise<ResultTuple<unknown>>;
+  RemoveClientSystemCheck(UUID: string, Key: ClientSystemCheckKey): Promise<ResultTuple<unknown>>;
+  /** CPU and memory usage over the history window, for the view modal's charts. */
+  GetClientVitalsHistory(UUID: string): Promise<ClientVitalsHistory>;
+  /** Healthy/failing history of each monitored system check, for the Status tab. */
+  GetClientSystemCheckHistory(UUID: string): Promise<ClientSystemCheckHistorySeries[]>;
   /** Change an endpoint's level and/or mute on the client machine. */
   SetClientAudioLevel(UUID: string, Request: AudioLevelRequest): Promise<ResultTuple<boolean>>;
   /** Manually record an extra MAC address against a client. Resolves Ok(true)
