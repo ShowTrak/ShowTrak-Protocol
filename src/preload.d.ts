@@ -25,6 +25,9 @@ import type {
   AudioAssetData,
   AudioAssetInspection,
   AudioAssetView,
+  AuditLogEntry,
+  AuditLogPage,
+  AuditLogQuery,
   ClientApplicationHistorySeries,
   ClientAudioHistorySeries,
   ClientNetworkHistorySeries,
@@ -574,6 +577,12 @@ export interface ShowTrakAPI {
   OpenLogConsole(Level: string): Promise<LogConsoleSnapshot | null>;
   CloseLogConsole(): Promise<unknown>;
   OnLogConsoleEntries(callback: (entries: LogConsoleEntry[]) => void): Unsubscribe;
+
+  // ---- Audit log --------------------------------------------------------------
+  // The last 24 hours of status changes, edits and actions, kept outside the
+  // show file. Appended entries are pushed as they are written.
+  GetAuditLog(Query?: AuditLogQuery): Promise<AuditLogPage>;
+  AuditLogAppended(callback: (entries: AuditLogEntry[]) => void): Unsubscribe;
 
   // ---- Rainbow Mode ---------------------------------------------------------
   // One in-memory flag shared by every surface; never persisted, off at boot.

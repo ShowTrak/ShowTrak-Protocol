@@ -1660,6 +1660,87 @@ export interface LogConsoleSnapshot {
   Entries: LogConsoleEntry[];
 }
 
+// ---- Audit log ---------------------------------------------------------------
+
+/** What an audit entry is about. `system` covers show files, mode and settings. */
+export type AuditEntityType =
+  | 'client'
+  | 'freekiosk'
+  | 'dummy'
+  | 'monitor'
+  | 'group'
+  | 'tag'
+  | 'script'
+  | 'alert-rule'
+  | 'variable'
+  | 'system';
+
+/** `status` = something the server observed; `edit` = someone changed the show; `action` = someone did something (WOL, script run, identify). */
+export type AuditCategory = 'status' | 'edit' | 'action';
+
+export type AuditSeverity = 'info' | 'success' | 'warning' | 'error';
+
+/**
+ * One run of text in an entry's summary. `H` marks text to highlight: the
+ * entity itself, a device/interface/application name, or a value (a port, an
+ * address, a mode).
+ */
+export interface AuditSegment {
+  T: string;
+  H?: 'entity' | 'device' | 'value';
+}
+
+/** One field an edit changed, already formatted for reading. */
+export interface AuditChange {
+  Field: string;
+  From: string | null;
+  To: string | null;
+}
+
+/**
+ * One audit log entry. Names are captured when the entry is written, so an
+ * entry still reads correctly after its entity is renamed, deleted, or another
+ * show file is opened.
+ */
+export interface AuditLogEntry {
+  /** Ascending per database; newer entries have larger IDs. */
+  ID: number;
+  /** Epoch ms. */
+  Timestamp: number;
+  EntityType: AuditEntityType;
+  /** UUID, TargetID, GroupID… as a string; null for system-wide entries. */
+  EntityID: string | null;
+  EntityName: string | null;
+  Category: AuditCategory;
+  Severity: AuditSeverity;
+  Summary: AuditSegment[];
+  /** Field-by-field detail for an edit; empty otherwise. */
+  Changes: AuditChange[];
+  /** Further detail lines (the warnings behind a degraded state, a check's error). */
+  Details: string[];
+  /** Which surface made an edit or action: Desktop, Web UI, OSC, HTTP API, SDK… Null for observed status. */
+  Source: string | null;
+}
+
+/** A read of the audit log, newest first. Every field is optional. */
+export interface AuditLogQuery {
+  EntityType?: AuditEntityType | null;
+  EntityID?: string | null;
+  Category?: AuditCategory | null;
+  /** Case-insensitive match against the summary, entity name and details. */
+  Search?: string | null;
+  /** Only entries older than this ID (paging back through the log). */
+  BeforeID?: number | null;
+  /** Page size; clamped to 1–500, default 200. */
+  Limit?: number | null;
+}
+
+export interface AuditLogPage {
+  Entries: AuditLogEntry[];
+  /** True when older entries match the query beyond this page. */
+  HasMore: boolean;
+}
+
 // ---- Client history -------------------------------------------------------
 
 /**
