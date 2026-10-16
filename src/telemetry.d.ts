@@ -43,7 +43,14 @@ export interface USBDevice {
   ManufacturerName?: string | null;
   ProductName?: string | null;
   SerialNumber?: string | null;
-  /** Where it is plugged in: "BUS-PORT[.PORT…]", the path through any hubs, e.g. "1-2.4". */
+  /**
+   * Where it is plugged in: "BUS-PORT[.PORT…]", the path through any hubs, e.g.
+   * "1-2.4". BUS is a number on macOS and Linux. On Windows it is the USB
+   * controller's PCI address, "PCI0:14.0-3.1" (one "/"-separated hop per bridge),
+   * or the raw location path when it has another shape; it never contains "-" or
+   * ",". Windows clients before the switch to usb 3.x sent a libusb bus number
+   * there instead, so a port guarded under one reads as moved once after it.
+   */
   Location?: string | null;
   /** The device's release number (bcdDevice), e.g. "1.23". */
   FirmwareVersion?: string | null;
