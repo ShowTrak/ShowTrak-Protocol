@@ -1313,6 +1313,10 @@ export interface AlertRuleView {
 export interface AlertTriggerType {
   ID: string;
   Name: string;
+  /** Completes "When <target> ..." in a rule summary, e.g. "is offline". */
+  Summary: string;
+  /** Picker group, e.g. "Status" or "Audio". The catalog is ordered by it. */
+  Category: string;
 }
 
 export interface AlertActionSettingField {
