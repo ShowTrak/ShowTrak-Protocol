@@ -17,6 +17,7 @@ import type {
   AudioLevelRequest,
   AudioLevelResult,
   PowerStatusSnapshot,
+  StorageSnapshot,
   TemperaturesSnapshot,
 } from './telemetry';
 import type { AdoptionHeartbeatPayload, UnadoptPayload, IdentifyPayload } from './adoption';
@@ -69,6 +70,12 @@ export interface ClientToServerEvents {
   PowerStatus: (snapshot: PowerStatusSnapshot) => void;
   /** Temperature sensors and thermal pressure. A full snapshot on change, plus a keepalive. */
   Temperatures: (snapshot: TemperaturesSnapshot) => void;
+  /**
+   * Mounted volumes: capacity, free space, read-only and drive health. A full
+   * snapshot on change (including free space moving by a meaningful step), plus
+   * a keepalive.
+   */
+  StorageVolumes: (snapshot: StorageSnapshot) => void;
   /**
    * Ask what the server understands. A server that predates this event never
    * invokes the callback, which is how the client detects an older server and

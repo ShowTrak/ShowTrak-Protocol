@@ -18,8 +18,10 @@ import type {
   AudioEndpoint,
   AudioMonitorStatus,
   NetworkInterfaceAddress,
+  CollectorStatus,
   PowerStatusSnapshot,
   RunningApplicationsCapabilities,
+  StorageVolume,
   TemperaturesSnapshot,
   ThermalState,
 } from './telemetry';
@@ -365,6 +367,62 @@ export interface NetworkStatusView {
 }
 
 /**
+ * A user-monitored storage volume, keyed by mount point, and the conditions it
+ * must keep. Emitted in `ClientView.CriticalStorageVolumes`.
+ *
+ * Free space is guarded as a share of the volume, as an amount, or both; a null
+ * limit is not guarded. Sizes are in GB of 1024³ bytes, as the cards show them.
+ */
+export interface CriticalStorageVolume {
+  MountPoint: string;
+  /** The volume's label when it was monitored, to name it while it is missing. */
+  Name: string | null;
+  /** Always true: a monitored volume must stay mounted. */
+  RequirePresent: boolean;
+  /** Free space, 1-99% of the volume, BELOW which the volume is in fault. */
+  MinFreePercent: number | null;
+  /** Free space, in whole GB, BELOW which the volume is in fault. */
+  MinFreeGB: number | null;
+  /** Fault while the volume is mounted read-only. */
+  RequireWritable: boolean;
+  /** Fault while the drive reports a health warning or failure. */
+  RequireHealthy: boolean;
+  Timestamp: number | null;
+}
+
+/** Why a monitored storage volume is not in its expected state. */
+export type StorageIssueKind = 'missing' | 'free_percent' | 'free_space' | 'read_only' | 'health';
+
+export interface StorageIssue {
+  Kind: StorageIssueKind;
+  /** Operator-facing sentence, e.g. "6% free (minimum 10%)". */
+  Message: string;
+}
+
+/**
+ * A volume as serialized to the renderer: one the client reported
+ * (`IsConnected`), or a monitored one it did not (`Missing`), which then carries
+ * its label and zeros for everything only a mounted volume has.
+ */
+export interface StorageVolumeView extends StorageVolume {
+  IsConnected: boolean;
+  IsCritical: boolean;
+  Missing: boolean;
+  /** Empty for a healthy or unmonitored volume. */
+  Issues: StorageIssue[];
+  Critical: CriticalStorageVolume | null;
+}
+
+/** `ClientView.StorageStatus`: the volumes judged against their monitored conditions. */
+export interface StorageStatusView {
+  /** Null until this connection has reported its volumes. */
+  SampledAt: number | null;
+  /** Null until the client has reported (an older client never does). */
+  Status: CollectorStatus | null;
+  Volumes: StorageVolumeView[];
+}
+
+/**
  * Telemetry list elements as *serialized* to the renderer: the raw wire shapes
  * enriched in-place by the Client class's critical-marking machinery.
  */
@@ -593,6 +651,8 @@ export interface ClientView {
   CriticalAudioDevices?: CriticalAudioDevice[];
   NetworkStatus?: NetworkStatusView;
   CriticalNetworkInterfaces?: CriticalNetworkInterface[];
+  StorageStatus?: StorageStatusView;
+  CriticalStorageVolumes?: CriticalStorageVolume[];
 }
 
 /** Renderer-facing group. */
@@ -1423,6 +1483,9 @@ export interface FogHostView {
   Name: string;
   /** Primary MAC, used to pre-select the likely match for a ShowTrak client. */
   MacAddress: string | null;
+  /** Every MAC FOG holds for the host, primary first, normalized. Absent from
+   *  servers that predate it. */
+  MacAddresses?: string[];
   /** Currently assigned image name, if any. Deploy fails without one. */
   ImageName: string | null;
 }
@@ -1787,6 +1850,13 @@ export interface ClientAudioHistorySeries {
 /** One critical network interface's timeline; keyed by interface name. */
 export interface ClientNetworkHistorySeries {
   InterfaceName: string;
+  Name: string;
+  samples: HistorySample[];
+}
+
+/** One monitored storage volume's timeline; keyed by mount point. */
+export interface ClientStorageHistorySeries {
+  MountPoint: string;
   Name: string;
   samples: HistorySample[];
 }

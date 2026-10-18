@@ -455,6 +455,55 @@ export interface TemperaturesSnapshot {
   ThermalState: ThermalState | null;
 }
 
+// --- Storage -----------------------------------------------------------------
+//
+// A full snapshot of the mounted volumes, sent on connect, whenever a volume
+// appears, disappears or changes state, when free space moves by a meaningful
+// step, and on a slow keepalive. Absent on clients before 3.28.0: the server
+// reads "no report" as "cannot tell", never as a fault.
+
+/** How a volume is attached to the machine. */
+export type StorageVolumeKind = 'internal' | 'external' | 'network' | 'unknown';
+
+/**
+ * The drive's own verdict on itself: SMART status on macOS, the volume's
+ * HealthStatus on Windows. `warning` means the operating system wants the
+ * volume scanned or repaired; `failing` means the drive reports itself failing.
+ */
+export type StorageHealth = 'ok' | 'warning' | 'failing';
+
+export interface StorageVolume {
+  /**
+   * Where the volume is mounted — "/", "/Volumes/Media", "/mnt/media" — or its
+   * drive ("D:") on Windows. Stable while the volume stays mounted where it is,
+   * which is why it is the volume's identity.
+   */
+  MountPoint: string;
+  /** The volume's label ("Macintosh HD", "MEDIA"). Null when it has none. */
+  Name: string | null;
+  /** "apfs", "NTFS", "ext4", "smbfs"… Null when unknown. */
+  FileSystem: string | null;
+  Kind: StorageVolumeKind;
+  /** Capacity in bytes. */
+  TotalBytes: number;
+  /**
+   * Bytes free for the client's user to write (what `df` calls Available).
+   * On APFS this is the free space of the whole container, as Finder shows it.
+   */
+  FreeBytes: number;
+  /** Mounted read-only. Null when the platform cannot say. */
+  ReadOnly: boolean | null;
+  /** Null when the drive does not report a verdict (or the platform cannot read it). */
+  Health: StorageHealth | null;
+}
+
+/** Payload of the `StorageVolumes` event. */
+export interface StorageSnapshot {
+  SampledAt: number;
+  Status: CollectorStatus;
+  Volumes: StorageVolume[];
+}
+
 /**
  * What a server tells a client it understands, in reply to
  * `GetServerCapabilities`.

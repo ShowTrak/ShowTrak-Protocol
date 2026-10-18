@@ -31,6 +31,7 @@ import type {
   ClientApplicationHistorySeries,
   ClientAudioHistorySeries,
   ClientNetworkHistorySeries,
+  ClientStorageHistorySeries,
   ClientDisplayHistorySeries,
   ClientUSBHistorySeries,
   ClientView,
@@ -178,6 +179,18 @@ export interface CriticalNetworkInterfacePayload {
   Gateway?: string | null;
 }
 
+/**
+ * Payload of `MarkClientStorageVolumeCritical`. Omitted options keep their
+ * current value; null (or false) stops guarding that condition.
+ */
+export interface CriticalStorageVolumePayload {
+  MountPoint: string;
+  MinFreePercent?: number | null;
+  MinFreeGB?: number | null;
+  RequireWritable?: boolean;
+  RequireHealthy?: boolean;
+}
+
 /** Unsubscribe handle returned by every `subscribe`-backed API method. */
 export type Unsubscribe = () => void;
 
@@ -246,6 +259,7 @@ export interface ShowTrakAPI {
   GetClientDisplayHistory(UUID: string): Promise<ClientDisplayHistorySeries[]>;
   GetClientAudioHistory(UUID: string): Promise<ClientAudioHistorySeries[]>;
   GetClientNetworkHistory(UUID: string): Promise<ClientNetworkHistorySeries[]>;
+  GetClientStorageHistory(UUID: string): Promise<ClientStorageHistorySeries[]>;
   UpdateClient(UUID: string, Data: Record<string, unknown>): Promise<ResultTuple<unknown>>;
   MarkClientUSBDeviceCritical(
     UUID: string,
@@ -286,6 +300,18 @@ export interface ShowTrakAPI {
     Interface: CriticalNetworkInterfacePayload
   ): Promise<ResultTuple<unknown>>;
   RemoveClientNetworkInterfaceCritical(UUID: string, Name: string): Promise<ResultTuple<unknown>>;
+  /**
+   * Monitor a storage volume, or change its conditions. A first mark guards
+   * 10% free space, and writability and drive health where the volume reports them.
+   */
+  MarkClientStorageVolumeCritical(
+    UUID: string,
+    Volume: CriticalStorageVolumePayload
+  ): Promise<ResultTuple<unknown>>;
+  RemoveClientStorageVolumeCritical(
+    UUID: string,
+    MountPoint: string
+  ): Promise<ResultTuple<unknown>>;
   /** Monitor a system check (CPU, memory, uptime, power, thermal), or change its conditions. */
   MarkClientSystemCheck(
     UUID: string,
