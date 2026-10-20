@@ -1166,6 +1166,10 @@ export interface FreeKioskMetricView {
   Options?: string[];
   Operators: FreeKioskOperator[];
   DefaultOperator?: FreeKioskOperator;
+  /** Unit a threshold is typed in when it is not the reading's own (uptime: days). */
+  ThresholdUnit?: string;
+  /** Reading units per threshold unit (86400 seconds per day). Defaults to 1. */
+  ThresholdScale?: number;
   Format?: FreeKioskMetricFormat;
   Advanced?: boolean;
   Note?: string;
