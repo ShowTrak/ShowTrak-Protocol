@@ -447,6 +447,10 @@ export interface ShowTrakAPI {
     Payload: unknown
   ): Promise<ResultTuple<MonitoringTargetView>>;
   DeleteMonitoringTarget(TargetID: number): Promise<ResultTuple<unknown>>;
+  MoveMonitoringCheck(
+    CheckID: number,
+    ToTargetID: number
+  ): Promise<ResultTuple<MonitoringTargetView>>;
   SetFullMonitoringTargetList(callback: (targets: MonitoringTargetView[]) => void): Unsubscribe;
   MonitoringTargetUpdated(callback: (target: MonitoringTargetView) => void): Unsubscribe;
 
