@@ -874,7 +874,7 @@ export interface MonitoringSettingVisibleWhen {
 export interface MonitoringSettingField {
   Key: string;
   Label: string;
-  /** 'string' (default) | 'number' | 'boolean' | 'select' | 'list'. */
+  /** 'string' (default) | 'number' | 'boolean' | 'select' | 'list' | 'names' | 'channels'. */
   Type: string;
   Default?: unknown;
   Min?: number;
@@ -882,6 +882,19 @@ export interface MonitoringSettingField {
   Options?: Array<string | { value: string; label?: string }>;
   /** For Type 'list': how each entry is validated/coerced ('string' | 'number'). */
   ItemType?: 'string' | 'number';
+  /**
+   * For Type 'names': one name box per channel, Count of them. The value is a
+   * string[] of that length; a blank entry means the default, which is
+   * ItemDefault with {n} replaced by the channel number (e.g. 'Channel {n}').
+   */
+  Count?: number;
+  ItemDefault?: string;
+  /**
+   * For Type 'channels': a checkbox per channel, in these groups. The value is a
+   * string[] of the ticked channels' IDs, `<Prefix>:<n>` (e.g. 'out:1'). Each
+   * box is labelled with the name from the 'names' setting NamesKey, if any.
+   */
+  Groups?: MonitoringChannelGroup[];
   Advanced?: boolean;
   /** Marks a setting the check cannot run without; the editor shows a red asterisk. */
   Required?: boolean;
@@ -893,6 +906,17 @@ export interface MonitoringSettingField {
    * to gate a field behind both an "enable" toggle and a specific operator.
    */
   VisibleWhen?: MonitoringSettingVisibleWhen | MonitoringSettingVisibleWhen[];
+}
+
+/** See MonitoringSettingField.Groups. */
+export interface MonitoringChannelGroup {
+  Prefix: string;
+  Label: string;
+  Count: number;
+  /** The default name, with {n} for the channel number, e.g. 'Mix {n}'. */
+  ItemDefault: string;
+  /** The 'names' setting that names these channels, if any. */
+  NamesKey?: string;
 }
 
 export interface MonitoringMethodInfo {
@@ -1051,6 +1075,12 @@ export interface MonitoringTargetView {
   CheckCount: number;
   Type: 'monitor';
   Checks: MonitoringCheckView[];
+  /**
+   * A custom footer for the dashboard tile, in place of the latency line. Only
+   * set when the monitor has exactly one check and that check's method offers a
+   * widget (e.g. 'levels': live output meters). Absent from older servers.
+   */
+  TileWidget?: MonitoringTileWidgetView | null;
 }
 
 /** Uniform RAM-only history sample used across every history domain. */
@@ -1727,6 +1757,16 @@ export interface LogConsoleSnapshot {
   Entries: LogConsoleEntry[];
 }
 
+/** See MonitoringTargetView.TileWidget. */
+export interface MonitoringTileWidgetView {
+  /** Which drawer the dashboard uses, e.g. 'levels'. */
+  Kind: string;
+  /** The check the widget belongs to. */
+  CheckID: number;
+  /** Whatever that drawer needs from the check's last result, if anything. */
+  Data?: unknown;
+}
+
 // ---- Live levels -------------------------------------------------------------
 
 /** One check's live audio meters, as streamed to an open monitor view. */
@@ -1737,14 +1777,62 @@ export interface MonitorLiveLevelsCheck {
   /** 'connecting' until the first meters arrive; 'unavailable' carries Message. */
   State: 'connecting' | 'live' | 'unavailable';
   Message: string | null;
-  /** dBFS per channel; null = no signal (−∞) or not yet read. */
-  Channels: Array<{ Label: string; Db: number | null }>;
+  /**
+   * dBFS per channel; null = no signal (−∞) or not yet read. Group heads a block
+   * of meters ('Inputs', 'Outputs'); Tile marks the ones shown on the dashboard
+   * tile.
+   */
+  Channels: MonitorLiveLevelsChannel[];
+}
+
+export interface MonitorLiveLevelsChannel {
+  /** What to send back to move it, e.g. 'in:3'. */
+  ID: string;
+  Group: string;
+  Label: string;
+  Db: number | null;
+  /** Shown in the monitor view (its group is toggled on there). */
+  View?: boolean;
+  /** Shown on the dashboard tile. */
+  Tile?: boolean;
+  /** The view may move this channel's fader and mute (live control is on). */
+  Control?: boolean;
+  /** The channel's fader in dB, null = −∞; absent until read. */
+  Fader?: number | null;
+  Muted?: boolean;
+}
+
+/** A fader level (dB, null = −∞) or a mute, sent from the monitor view. */
+export interface MonitorLiveLevelChange {
+  Fader?: number | null;
+  Muted?: boolean;
+}
+
+/** What moving a live fader or mute came to; Error is shown to the operator. */
+export interface MonitorLiveLevelResult {
+  Success: boolean;
+  Error?: string;
+  Detail?: string;
 }
 
 /** Every streaming check on one monitor. Sent in full on each update. */
 export interface MonitorLiveLevelsSnapshot {
   TargetID: number;
   Checks: MonitorLiveLevelsCheck[];
+}
+
+/** One monitor tile's live meters (its widget's tile channels only). */
+export interface MonitorTileLevels {
+  TargetID: number;
+  CheckID: number;
+  State: 'connecting' | 'live' | 'unavailable';
+  Message: string | null;
+  Channels: Array<{ Label: string; Db: number | null }>;
+}
+
+/** Every dashboard tile with a 'levels' widget. Sent in full on each update. */
+export interface MonitorTileLevelsSnapshot {
+  Tiles: MonitorTileLevels[];
 }
 
 // ---- Audit log ---------------------------------------------------------------

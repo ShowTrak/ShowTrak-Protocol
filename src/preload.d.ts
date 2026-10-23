@@ -42,6 +42,9 @@ import type {
   LogConsoleEntry,
   LogConsoleSnapshot,
   MonitorLiveLevelsSnapshot,
+  MonitorTileLevelsSnapshot,
+  MonitorLiveLevelChange,
+  MonitorLiveLevelResult,
   DummyClientDefaults,
   DummyClientView,
   FogHostView,
@@ -616,7 +619,21 @@ export interface ShowTrakAPI {
   // the surface cannot stream.
   OpenMonitorLiveLevels(TargetID: number): Promise<MonitorLiveLevelsSnapshot | null>;
   CloseMonitorLiveLevels(): Promise<unknown>;
+  // Move one channel's fader or mute (a channel marked Control). Final marks the
+  // end of a fader drag, which is what the audit log records.
+  SetMonitorLiveLevel(
+    TargetID: number,
+    CheckID: number,
+    ChannelID: string,
+    Change: MonitorLiveLevelChange,
+    Final: boolean
+  ): Promise<MonitorLiveLevelResult | null>;
   OnMonitorLiveLevels(callback: (snapshot: MonitorLiveLevelsSnapshot) => void): Unsubscribe;
+  // The meters for every dashboard tile with a 'levels' widget, streamed only
+  // between Open and Close: while a dashboard is showing.
+  OpenMonitorTileLevels(): Promise<MonitorTileLevelsSnapshot | null>;
+  CloseMonitorTileLevels(): Promise<unknown>;
+  OnMonitorTileLevels(callback: (snapshot: MonitorTileLevelsSnapshot) => void): Unsubscribe;
 
   // ---- Audit log --------------------------------------------------------------
   // The last 24 hours of status changes, edits and actions, kept outside the
