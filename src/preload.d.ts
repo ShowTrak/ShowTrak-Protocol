@@ -41,6 +41,7 @@ import type {
   DebugTrafficEntry,
   LogConsoleEntry,
   LogConsoleSnapshot,
+  MonitorLiveLevelsSnapshot,
   DummyClientDefaults,
   DummyClientView,
   FogHostView,
@@ -607,6 +608,15 @@ export interface ShowTrakAPI {
   OpenLogConsole(Level: string): Promise<LogConsoleSnapshot | null>;
   CloseLogConsole(): Promise<unknown>;
   OnLogConsoleEntries(callback: (entries: LogConsoleEntry[]) => void): Unsubscribe;
+
+  // ---- Live levels ----------------------------------------------------------
+  // Audio meters for the checks on one monitor that have live levels turned on,
+  // streamed only between Open and Close (a stream can hold a device's only
+  // control connection). Opening another monitor replaces the first. Null when
+  // the surface cannot stream.
+  OpenMonitorLiveLevels(TargetID: number): Promise<MonitorLiveLevelsSnapshot | null>;
+  CloseMonitorLiveLevels(): Promise<unknown>;
+  OnMonitorLiveLevels(callback: (snapshot: MonitorLiveLevelsSnapshot) => void): Unsubscribe;
 
   // ---- Audit log --------------------------------------------------------------
   // The last 24 hours of status changes, edits and actions, kept outside the

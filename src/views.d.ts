@@ -1727,6 +1727,26 @@ export interface LogConsoleSnapshot {
   Entries: LogConsoleEntry[];
 }
 
+// ---- Live levels -------------------------------------------------------------
+
+/** One check's live audio meters, as streamed to an open monitor view. */
+export interface MonitorLiveLevelsCheck {
+  CheckID: number;
+  /** The check's own name; empty when it has none. */
+  Name: string;
+  /** 'connecting' until the first meters arrive; 'unavailable' carries Message. */
+  State: 'connecting' | 'live' | 'unavailable';
+  Message: string | null;
+  /** dBFS per channel; null = no signal (−∞) or not yet read. */
+  Channels: Array<{ Label: string; Db: number | null }>;
+}
+
+/** Every streaming check on one monitor. Sent in full on each update. */
+export interface MonitorLiveLevelsSnapshot {
+  TargetID: number;
+  Checks: MonitorLiveLevelsCheck[];
+}
+
 // ---- Audit log ---------------------------------------------------------------
 
 /** What an audit entry is about. `system` covers show files, mode and settings. */
