@@ -1572,11 +1572,15 @@ export interface SettingView {
   Min: number | null;
   Max: number | null;
   Unit: string | null;
+  /** Shown in Preferences only while every BOOLEAN setting named here is on. */
+  ShowWhen?: string[] | null;
 }
 
 export interface SettingGroupView {
   Name: string;
   Title: string;
+  /** As SettingView.ShowWhen, for the whole group and its tab. */
+  ShowWhen?: string[] | null;
 }
 
 export interface AppConfig {

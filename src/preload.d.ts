@@ -204,6 +204,18 @@ export type AppMode = 'SHOW' | 'EDIT' | string;
 /** `[error, data]` tuple returned by manager-backed IPC handlers. */
 export type ResultTuple<T = unknown> = [string | null, T | null];
 
+/** A show file last saved by an older ShowTrak Server, awaiting the operator's go-ahead to upgrade. */
+export interface ShowFileUpgrade {
+  FilePath: string;
+  FileName: string;
+  /** Version that last saved the file; null when it predates version stamping. */
+  FileVersion: string | null;
+  CurrentVersion: string;
+}
+
+export type ShowFileOpenOutcome =
+  { Status: 'Opened'; FilePath: string } | { Status: 'UpgradeRequired'; Upgrade: ShowFileUpgrade };
+
 /**
  * The preload API exposed on `window.API`.
  *
@@ -358,15 +370,20 @@ export interface ShowTrakAPI {
   NewShow(): Promise<ResultTuple<unknown>>;
   SaveShow(): Promise<ResultTuple<unknown>>;
   SaveShowAs(): Promise<ResultTuple<unknown>>;
-  OpenShow(): Promise<ResultTuple<unknown>>;
+  OpenShow(): Promise<ResultTuple<ShowFileOpenOutcome>>;
   GetCurrentShowFile(): Promise<unknown>;
   HasUnsavedShowData(): Promise<unknown>;
-  EnsureShowFileExists(): Promise<ResultTuple<{ Missing?: boolean }>>;
+  EnsureShowFileExists(): Promise<ResultTuple<{ Missing?: boolean; FilePath?: string }>>;
+  /** The show file left open last session, when an older version last saved it. */
+  CheckShowFileUpgrade(): Promise<ResultTuple<ShowFileUpgrade>>;
+  /** Answer the pending upgrade: true backs the file up and upgrades it. */
+  ResolveShowFileUpgrade(Accept: boolean): Promise<ResultTuple<unknown>>;
   OnShowFileUpdated(callback: (payload: unknown) => void): Unsubscribe;
 
   // ---- Folders ----------------------------------------------------------
   OpenLogsFolder(): Promise<unknown>;
   OpenScriptsFolder(): Promise<unknown>;
+  OpenBackupsFolder(): Promise<unknown>;
 
   // ---- Menu / window ----------------------------------------------------
   OnAppMenuAction(callback: (action: unknown) => void): Unsubscribe;
