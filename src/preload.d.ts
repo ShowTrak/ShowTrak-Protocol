@@ -240,7 +240,7 @@ export interface ShowTrakAPI {
 
   // ---- ShowTrak Remote (desktop only) -----------------------------------
   // Absent from the web and remote channel allowlists on purpose: a phone must
-  // not be able to enumerate — let alone revoke — the other phones paired to a
+  // not be able to enumerate (let alone revoke) the other phones paired to a
   // workspace. Revocation is a decision made at the desk.
   GetRemoteDevices(): Promise<ResultTuple<RemoteDeviceView[]>>;
   RevokeRemoteDevice(DeviceID: string): Promise<ResultTuple<string>>;
@@ -516,7 +516,7 @@ export interface ShowTrakAPI {
   GetFreeKioskMetrics(): Promise<FreeKioskMetricCatalog>;
   GetFreeKioskCommands(): Promise<FreeKioskCommandDef[]>;
   GetAllFreeKioskTerminals(): Promise<FreeKioskTerminalView[]>;
-  /** The editor's read — carries the stored API key, unlike the broadcast view. */
+  /** The editor's read: carries the stored API key, unlike the broadcast view. */
   GetFreeKioskTerminal(UUID: string): Promise<FreeKioskTerminalEditorView | null>;
   GetFreeKioskHistory(UUID: string, MetricKeys?: string[]): Promise<FreeKioskMetricSeries[]>;
   GenerateFreeKioskTerminalDefaults(): Promise<FreeKioskTerminalDefaults>;
@@ -589,7 +589,7 @@ export interface ShowTrakAPI {
   // ---- FOG Project integration ------------------------------------------
   GetFogStatus(): Promise<FogStatusView>;
   TestFogConnection(): Promise<FogStatusView>;
-  /** Never rejects when FOG is down — returns the last known list instead. */
+  /** Never rejects when FOG is down; returns the last known list instead. */
   GetFogHosts(): Promise<ResultTuple<FogHostView[]>>;
   GetFogHostLink(
     UUID: string

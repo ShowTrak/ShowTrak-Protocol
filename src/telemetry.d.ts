@@ -44,7 +44,7 @@ export interface USBDevice {
   ProductName?: string | null;
   SerialNumber?: string | null;
   /**
-   * Where it is plugged in: "BUS-PORT[.PORT…]", the path through any hubs, e.g.
+   * Where it is plugged in: "BUS-PORT[.PORT...]", the path through any hubs, e.g.
    * "1-2.4". BUS is a number on macOS and Linux. On Windows it is the USB
    * controller's PCI address, "PCI0:14.0-3.1" (one "/"-separated hop per bridge),
    * or the raw location path when it has another shape; it never contains "-" or
@@ -117,7 +117,7 @@ export interface NetworkInterfaceAddress {
  * A network interface reported by the client's `NetworkInterfaces` event.
  *
  * NOTE: this previously declared PascalCase `Name`/`Address`/`MAC`/`Family`
- * fields plus an index signature. Nothing ever emitted or read those — the
+ * fields plus an index signature. Nothing ever emitted or read those; the
  * client sends `{ name, addresses[] }` and the server's client-info modal reads
  * `iface.name` / `iface.addresses[].address`. The index signature hid the
  * mismatch; the shape below is what actually goes over the wire.
@@ -127,8 +127,8 @@ export interface NetworkInterface {
   addresses: NetworkInterfaceAddress[];
   /**
    * The IPv4 default gateway (router) reached through this interface, or null
-   * when it has none. ABSENT when the client cannot tell — an older client, or
-   * one whose routing table has never been readable — which the server reads
+   * when it has none. ABSENT when the client cannot tell (an older client, or
+   * one whose routing table has never been readable), which the server reads
    * as "unknown", never as "no router".
    */
   gateway?: string | null;
@@ -167,7 +167,7 @@ export interface RunningApplicationsCapabilities {
  * Health of the client's running-applications collector.
  *
  * NOTE: previously declared `'unsupported' | 'permission'`, neither of which the
- * client ever emits — the real states are the four below, set by
+ * client ever emits; the real states are the four below, set by
  * ProcessMonitor's `setStatus`/`classifyCollectionError`. The union was widened
  * with `| string`, which stopped the mismatch from being visible.
  */
@@ -231,7 +231,7 @@ export type AudioBackend = 'coreaudio' | 'wasapi' | 'pulseaudio' | 'alsa';
  *
  * A duplex interface (one with both inputs and outputs) is reported as TWO
  * endpoints. That is how Windows and PulseAudio model audio natively, and it
- * keeps "the default input" and "the default output" independent — on macOS the
+ * keeps "the default input" and "the default output" independent; on macOS the
  * client splits each device itself to match.
  */
 export interface AudioEndpoint {
@@ -474,14 +474,14 @@ export type StorageHealth = 'ok' | 'warning' | 'failing';
 
 export interface StorageVolume {
   /**
-   * Where the volume is mounted — "/", "/Volumes/Media", "/mnt/media" — or its
+   * Where the volume is mounted ("/", "/Volumes/Media", "/mnt/media") or its
    * drive ("D:") on Windows. Stable while the volume stays mounted where it is,
    * which is why it is the volume's identity.
    */
   MountPoint: string;
   /** The volume's label ("Macintosh HD", "MEDIA"). Null when it has none. */
   Name: string | null;
-  /** "apfs", "NTFS", "ext4", "smbfs"… Null when unknown. */
+  /** "apfs", "NTFS", "ext4", "smbfs", etc. Null when unknown. */
   FileSystem: string | null;
   Kind: StorageVolumeKind;
   /** Capacity in bytes. */
@@ -509,7 +509,7 @@ export interface StorageSnapshot {
  * `GetServerCapabilities`.
  *
  * A server that predates this event never invokes the acknowledgement at all,
- * which is the signal the client uses to stay on full lists — so the absence of
+ * which is the signal the client uses to stay on full lists, so the absence of
  * a reply is meaningful and must not be given a default.
  */
 export interface ServerCapabilities {

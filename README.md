@@ -1,6 +1,6 @@
 # @showtrak/protocol
 
-Shared **wire-protocol type definitions** for the ShowTrak platform — the payload
+Shared **wire-protocol type definitions** for the ShowTrak platform: the payload
 shapes exchanged over Socket.IO between:
 
 - **[ShowTrak Server](https://github.com/ShowTrak/ShowTrakServer)** (control plane)
@@ -12,10 +12,10 @@ shapes exchanged over Socket.IO between:
 These types are authored as ambient TypeScript declaration files (`.d.ts`) with
 **no runtime code**. That keeps them:
 
-- **Authoritative** — one definition of the wire, shared by every surface, so a
+- **Authoritative**: one definition of the wire, shared by every surface, so a
   change to a payload cannot land on one side only.
-- **Reusable** — any TypeScript project can consume them as-is.
-- **Safe to import** — because they contain only types, `import type { ... }`
+- **Reusable**: any TypeScript project can consume them as-is.
+- **Safe to import**: because they contain only types, `import type { ... }`
   statements are fully erased at compile time (no runtime dependency).
 
 This repo is consumed as a **git submodule**, not an npm package. It is checked
@@ -84,7 +84,7 @@ consume them; the Client has its own, separate preload contract in its own repo.
 ## Making changes
 
 The event maps in `events.d.ts` are the contract. When adding an event, add it to
-the map **and** implement it on both sides in the same change — a listener with no
+the map **and** implement it on both sides in the same change; a listener with no
 emitter (or vice versa) is exactly the drift this repo exists to prevent.
 
 ```sh

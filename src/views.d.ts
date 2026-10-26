@@ -1,9 +1,9 @@
-// @showtrak/protocol — serialized entity / "view" shapes as they cross the
+// @showtrak/protocol: serialized entity / "view" shapes as they cross the
 // renderer <-> main IPC boundary.
 //
 // Extracted from preload.d.ts so that file can be just the `window.API`
 // contract. Field casing intentionally mirrors each producer (some handlers
-// emit camelCase, some PascalCase — see per-type notes). Re-exported through
+// emit camelCase, some PascalCase; see per-type notes). Re-exported through
 // the package barrel (index.d.ts), so consumers still `import type { ClientView }
 // from '@showtrak/protocol'` unchanged.
 
@@ -589,7 +589,7 @@ export interface ClientView {
   // namespace (real clients + monitors + dummies).
   Slug?: string | null;
   IP?: string | null;
-  /** MAC of the interface serving the active socket IP — the currently-active
+  /** MAC of the interface serving the active socket IP: the currently-active
    *  address. One of MacAddresses below; kept as a convenience for display. */
   MacAddress?: string | null;
   /** Every MAC the client is known by. This, not MacAddress, is the full
@@ -679,9 +679,9 @@ export interface GroupView {
 /**
  * Tag membership scope (same shape as ScriptWhitelistScope / AlertRuleScope).
  * `Workspace: true` means every client carries the tag; otherwise membership is
- * the union of the listed groups (by GroupID, dynamic — current AND future
- * members), tags (by TagID, dynamic — a tag can therefore be a superset of
- * other tags) and clients (by scoped ID: plain UUID, or `monitor:`/`check:`…).
+ * the union of the listed groups (by GroupID, dynamic: current AND future
+ * members), tags (by TagID, dynamic; a tag can therefore be a superset of
+ * other tags) and clients (by scoped ID: plain UUID, or `monitor:`/`check:`...).
  *
  * `Tags` is optional on the wire because rows written before tag-in-tag support
  * do not carry it; every normalizer emits it, and readers must treat an absent
@@ -698,7 +698,7 @@ export interface TagScope {
  * How a tag draws itself on a client tile.
  *
  * `hidden` keeps the tag fully functional (membership, scripts, OSC, alert
- * scopes) while drawing nothing — the intended shape for tags that exist purely
+ * scopes) while drawing nothing: the intended shape for tags that exist purely
  * to target machines rather than to label them on screen.
  *
  * The tile's badge row is a fixed height, so the modes differ only in what a
@@ -724,7 +724,7 @@ export interface TagView {
 // ---------------------------------------------------------------------------
 // Domain view types (serialized shapes as they cross the IPC boundary).
 // Field casing intentionally mirrors each producer: some handlers emit
-// camelCase, some PascalCase — see per-type notes.
+// camelCase, some PascalCase; see per-type notes.
 // ---------------------------------------------------------------------------
 
 // ---- Scripts --------------------------------------------------------------
@@ -754,7 +754,7 @@ export interface ScriptManagerEntry {
  * (by GroupID), tags (by TagID) and clients (by UUID); an empty list therefore
  * means "no clients may run this script".
  *
- * `Tags` is optional on the wire — rows written before tag support omit it and
+ * `Tags` is optional on the wire: rows written before tag support omit it and
  * an absent list means "no tags", never "all".
  */
 export interface ScriptWhitelistScope {
@@ -831,7 +831,7 @@ export interface ScriptCatalogEntry {
   ParseError?: string;
   RawText?: string;
   /**
-   * Per-show whitelist scope. `null`/absent means unrestricted (all clients) —
+   * Per-show whitelist scope. `null`/absent means unrestricted (all clients),
    * the default. Attached to the catalog push from the ScriptWhitelistManager;
    * consumed by the context menu to hide the script for non-whitelisted clients.
    */
@@ -861,7 +861,7 @@ export interface ScriptExecutionView {
 
 /**
  * Conditional visibility: the field shows only while sibling `Key` matches.
- * Give either `Equals` (exact match) or `In` (membership) — `In` exists so a
+ * Give either `Equals` (exact match) or `In` (membership); `In` exists so a
  * field can be gated on "the operator is one of the ones that takes a value",
  * which equality alone cannot express.
  */
@@ -927,7 +927,7 @@ export interface MonitoringMethodInfo {
 }
 
 /**
- * One controllable action a monitoring method declares — something the operator
+ * One controllable action a monitoring method declares: something the operator
  * can DO to the monitored device, as opposed to something the check reads.
  *
  * Actions are addressed as `<Method>/<ActionID>` everywhere (UI, IPC, OSC), so
@@ -1292,7 +1292,7 @@ export interface FreeKioskTerminalView {
   Hostname: string;
   Address: string;
   Port: number;
-  /** The API key itself is never broadcast — only whether one is configured. */
+  /** The API key itself is never broadcast, only whether one is configured. */
   HasApiKey: boolean;
   IP: string | null;
   Version: 'FreeKiosk';
@@ -1325,7 +1325,7 @@ export interface FreeKioskTerminalView {
  * The key is left out of FreeKioskTerminalView because that shape is pushed to
  * every connected Web UI on every poll and JSON-stringified into alert history,
  * neither of which needs it. This shape is only ever returned in direct response
- * to opening the editor — the one place the key has to be shown, because it is
+ * to opening the editor, the one place the key has to be shown, because it is
  * the form that edits it.
  */
 export interface FreeKioskTerminalEditorView extends FreeKioskTerminalView {
@@ -1375,7 +1375,7 @@ export interface FreeKioskCommandSummary {
 /**
  * Which entities a rule watches. Same shape as TagScope / ScriptWhitelistScope:
  * the union of every group, tag and client listed (or everything, when
- * `Workspace` is true). `Tags` is optional — rules stored before tag support
+ * `Workspace` is true). `Tags` is optional: rules stored before tag support
  * omit it, and an absent list means "no tags".
  */
 export interface AlertRuleScope {
@@ -1614,7 +1614,7 @@ export interface RemoteDeviceView {
 }
 
 /**
- * A single-use pairing code, for display as a QR. Short-lived by design — it is
+ * A single-use pairing code, for display as a QR. Short-lived by design: it is
  * shown on a screen anyone in the room can see.
  */
 export interface RemotePairingCode {
@@ -1887,7 +1887,7 @@ export interface AuditLogEntry {
   /** Epoch ms. */
   Timestamp: number;
   EntityType: AuditEntityType;
-  /** UUID, TargetID, GroupID… as a string; null for system-wide entries. */
+  /** UUID, TargetID, GroupID, etc. as a string; null for system-wide entries. */
   EntityID: string | null;
   EntityName: string | null;
   Category: AuditCategory;
@@ -1897,7 +1897,7 @@ export interface AuditLogEntry {
   Changes: AuditChange[];
   /** Further detail lines (the warnings behind a degraded state, a check's error). */
   Details: string[];
-  /** Which surface made an edit or action: Desktop, Web UI, OSC, HTTP API, SDK… Null for observed status. */
+  /** Which surface made an edit or action: Desktop, Web UI, OSC, HTTP API, SDK, etc. Null for observed status. */
   Source: string | null;
 }
 

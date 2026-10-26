@@ -1,4 +1,4 @@
-// @showtrak/protocol — barrel re-export of all shared wire-protocol types.
+// @showtrak/protocol: barrel re-export of all shared wire-protocol types.
 // Import with type-only syntax, e.g.:
 //   import type { HeartbeatPayload } from '@showtrak/protocol';
 

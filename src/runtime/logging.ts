@@ -11,7 +11,7 @@
 //
 // What was genuinely duplicated is everything below: how a level is ranked and
 // gated, how the default level is derived, and the formatting helpers. That is
-// also exactly where the two copies drifted — the Server derived its default
+// also exactly where the two copies drifted: the Server derived its default
 // from NODE_ENV alone, which a packaged Electron app never sets, so every
 // shipped Server logged at 'debug' forever while its settings UI read 'info'.
 // The Client had already fixed that; the Server had not. Deriving it in one
@@ -34,7 +34,7 @@ export interface DefaultLevelInputs {
    *
    * Callers pass `!process.defaultApp`: Electron sets `defaultApp` only when the
    * app was launched from a checkout (`electron .`), so its ABSENCE is the
-   * "packaged" signal — the same test `app.isPackaged` performs. It is passed in
+   * "packaged" signal, the same test `app.isPackaged` performs. It is passed in
    * rather than read here so this module stays loadable outside Electron (both
    * apps' test suites load their Logger directly).
    */
@@ -100,7 +100,7 @@ export function GetDateTimeStamp(date: Date = new Date()): string {
  * Render an arbitrary logged argument as a string for the file sink.
  *
  * Errors keep their stack (the thing you actually need), strings pass through,
- * and anything else is JSON — falling back to String() for values JSON refuses,
+ * and anything else is JSON, falling back to String() for values JSON refuses,
  * such as a circular object or a BigInt.
  */
 export function SerializeArg(arg: unknown): string {

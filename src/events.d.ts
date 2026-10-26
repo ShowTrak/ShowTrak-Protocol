@@ -40,7 +40,7 @@ export interface ClientToServerEvents {
    * same values a server-dispatched one would.
    *
    * A server that predates variables has no handler and never acks, which the
-   * client treats as "no variables" — the same absence-is-the-answer pattern
+   * client treats as "no variables", the same absence-is-the-answer pattern
    * `GetServerCapabilities` uses.
    */
   GetVariables: (callback: (payload: VariablePayload) => void) => void;
@@ -138,7 +138,7 @@ export interface ServerToClientEvents {
   StopIdentify: () => void;
   /**
    * Change one audio endpoint's level and/or mute. The client applies it,
-   * re-samples, reports the new snapshot, and only then acknowledges — so by the
+   * re-samples, reports the new snapshot, and only then acknowledges, so by the
    * time the server hears "done", the new level is already on its way.
    *
    * A client that predates audio monitoring has no handler and never acks; the

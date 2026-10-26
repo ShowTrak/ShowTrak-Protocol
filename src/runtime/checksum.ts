@@ -3,7 +3,7 @@
 // The Server hashes every file in a script folder and ships the digests in the
 // Script.json manifest; the Client compares them to decide what to re-download,
 // and verifies the bytes that arrive before writing them to a path it will later
-// hand to spawn(). Both sides therefore have to agree on the algorithm exactly —
+// hand to spawn(). Both sides therefore have to agree on the algorithm exactly,
 // which is why this is shared rather than implemented twice. It previously was
 // implemented twice, and one of the copies went through the abandoned `checksum`
 // package (last published 2017) whose default algorithm this preserves.
@@ -24,7 +24,7 @@ export interface ChecksumErrorSink {
 /**
  * SHA-1 hex digest of a file's contents, or `null` when it cannot be read.
  *
- * Streamed rather than read whole — script payloads are arbitrary files.
+ * Streamed rather than read whole: script payloads are arbitrary files.
  *
  * Never rejects: every caller treats "no checksum" as "assume stale and
  * re-download", which is the safe direction, so a read failure resolves `null`
@@ -49,7 +49,7 @@ export function ChecksumFile(
 /**
  * SHA-1 hex digest of an in-memory buffer, for verifying downloaded bytes before
  * they are written to disk. Same algorithm as ChecksumFile, so the two are
- * directly comparable — which is the whole point at the download-verify step.
+ * directly comparable, which is the whole point at the download-verify step.
  */
 export function ChecksumBuffer(contents: Buffer): string {
   return createHash('sha1').update(contents).digest('hex');

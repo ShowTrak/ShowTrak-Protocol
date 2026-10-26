@@ -4,7 +4,7 @@
 export type ExecutionRequestID = string;
 
 /**
- * Ack payload of the client's `GetLaunchConfig` request — the per-client
+ * Ack payload of the client's `GetLaunchConfig` request: the per-client
  * run-on-launch configuration.
  *
  * The server is the single source of truth; the client fetches this fresh on

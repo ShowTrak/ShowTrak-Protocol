@@ -1,7 +1,7 @@
 // Central classifier for transient/benign network errors.
 //
-// When a host loses connectivity — Ethernet unplugged, Wi-Fi turned off, a VPN
-// dropping, a NIC being removed — sockets that were mid-flight throw system
+// When a host loses connectivity (Ethernet unplugged, Wi-Fi turned off, a VPN
+// dropping, a NIC being removed), sockets that were mid-flight throw system
 // errors from deep inside libuv/Node that an ordinary try/catch cannot wrap
 // (they surface asynchronously in a dgram send callback or a socket 'error'
 // event). The canonical symptom is the mDNS responder/browser throwing:
@@ -30,7 +30,7 @@ export const TRANSIENT_NETWORK_ERROR_CODES: ReadonlySet<string> = new Set([
   'EHOSTUNREACH', // no route to host
   'EHOSTDOWN', // host is down
   'ENODEV', // no such device (interface removed out from under us)
-  'EPIPE', // broken pipe during a send — also a closed stdout when run detached
+  'EPIPE', // broken pipe during a send; also a closed stdout when run detached
   'ECONNRESET', // peer/ICMP reset
   'ECONNREFUSED', // ICMP port-unreachable surfaced on a prior UDP send
   'ERR_SOCKET_DGRAM_NOT_RUNNING', // sent on a dgram socket that is already closing
@@ -89,13 +89,13 @@ export interface LoggerLike {
 //
 // This is NOT optional for either app. The library's default is
 // `function (err) { throw err }`, raised from inside a dgram send callback where
-// no caller-side try/catch can reach it — so on a packaged build an ordinary
+// no caller-side try/catch can reach it, so on a packaged build an ordinary
 // interface drop would terminate the process. Supplying a handler is what keeps
 // a NIC flap a logged warning instead.
 export function CreateBonjourErrorHandler(Logger: LoggerLike): (Err: unknown) => void {
   return (Err: unknown) => {
     if (IsTransientNetworkError(Err)) {
-      Logger.warn(`mDNS send skipped — network unavailable (${DescribeError(Err)})`);
+      Logger.warn(`mDNS send skipped: network unavailable (${DescribeError(Err)})`);
       return;
     }
     // Anything else is unexpected but still must not crash the app: an mDNS send

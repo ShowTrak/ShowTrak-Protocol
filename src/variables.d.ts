@@ -1,4 +1,4 @@
-// Show Variables — operator-defined key/value pairs that reach a client's
+// Show Variables: operator-defined key/value pairs that reach a client's
 // scripts as environment variables.
 //
 // A variable is defined once per show (a `VariableView`), carries a default
@@ -6,7 +6,7 @@
 // client is the *resolved* map (a `VariableEnvironment`): every defined
 // variable, already prefixed and already collapsed down to the single value
 // that client should see. The client never learns about defaults, overrides or
-// variable IDs — it receives a finished environment block and injects it.
+// variable IDs; it receives a finished environment block and injects it.
 
 /**
  * The prefix every show variable carries once it reaches a script.
@@ -43,7 +43,7 @@ export interface VariableView {
   ExportToSystem: boolean;
   Weight: number;
   /**
-   * Number of clients holding an explicit override. Display only — lets the
+   * Number of clients holding an explicit override. Display only; lets the
    * manager show "3 clients override this" without a second round trip.
    */
   OverrideCount: number;
