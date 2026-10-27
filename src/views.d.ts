@@ -1581,6 +1581,8 @@ export interface SettingGroupView {
   Title: string;
   /** As SettingView.ShowWhen, for the whole group and its tab. */
   ShowWhen?: string[] | null;
+  /** Renders inside this group's tab, under its own heading, not as a tab. */
+  Parent?: string | null;
 }
 
 export interface AppConfig {
