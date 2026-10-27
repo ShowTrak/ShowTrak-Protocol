@@ -1012,6 +1012,21 @@ export interface MonitoringMethodView {
   Settings: MonitoringSettingField[];
   // Controllable actions this method offers (empty for read-only check types).
   Actions: MonitoringActionDef[];
+  // What a device this method monitors looks like on the network; null when the
+  // LAN discovery wizard never suggests it.
+  Discovery: MonitoringMethodDiscovery | null;
+}
+
+/** A method's LAN discovery signature (see MonitoringMethods/types.ts). */
+export interface MonitoringMethodDiscovery {
+  Confidence: 'high' | 'medium' | 'low';
+  TcpPorts?: number[];
+  ServiceTypes?: string[];
+  PJLink?: boolean;
+  PortSetting?: string;
+  NameSetting?: string;
+  PortSettings?: Record<string, Record<string, unknown>>;
+  ServiceSettings?: Record<string, Record<string, unknown>>;
 }
 
 export interface MonitoringCheckView {
@@ -1683,6 +1698,9 @@ export interface NetworkScanResult {
   Port: number | null;
   TXT?: Record<string, unknown> | null;
   MethodHint: 'http' | 'ping' | 'pjlink';
+  // Probe results: every TCP port found open on the host, across the liveness
+  // ports and every port a check type's discovery signature names.
+  OpenPorts?: number[];
 }
 
 export type NetworkScanEvent =
