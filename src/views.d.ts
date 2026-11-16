@@ -883,6 +883,11 @@ export interface MonitoringSettingField {
   /** For Type 'list': how each entry is validated/coerced ('string' | 'number'). */
   ItemType?: 'string' | 'number';
   /**
+   * For Type 'list': also offer what the device reported on the check's last
+   * successful run (MonitoringCheckDebug.SettingOptions) as checkboxes.
+   */
+  FromDevice?: boolean;
+  /**
    * For Type 'names': one name box per channel, Count of them. The value is a
    * string[] of that length; a blank entry means the default, which is
    * ItemDefault with {n} replaced by the channel number (e.g. 'Channel {n}').
@@ -962,6 +967,16 @@ export interface MonitoringActionDef {
  * schema's free-text field.
  */
 export type MonitoringActionOptions = Record<string, Array<{ value: string; label: string }>>;
+
+/**
+ * Items a device reported for a FromDevice 'list' setting, keyed by the setting's
+ * Key. `aliases` are other stored values meaning the same item (a name, where the
+ * value is a MAC address).
+ */
+export type MonitoringSettingOptions = Record<
+  string,
+  Array<{ value: string; label: string; detail?: string; aliases?: string[] }>
+>;
 
 /** A starred action, offered in the context menu for any selected monitor whose checks declare it. */
 export interface MonitoringActionFavouriteView {
@@ -1119,6 +1134,11 @@ export interface MonitoringCheckDebug {
   /** Failed probes in a row, and how many it takes to read offline. */
   ConsecutiveFailures: number;
   EffectiveFailureThreshold: number;
+  /**
+   * What the device reported for the check's FromDevice settings on its last
+   * successful run. Absent or empty until then.
+   */
+  SettingOptions?: MonitoringSettingOptions;
 }
 
 // ---- Dummy clients --------------------------------------------------------
