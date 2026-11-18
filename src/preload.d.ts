@@ -13,6 +13,7 @@
 // where the payload is opaque/dynamic; the latter are tightened as the renderer
 // files are migrated and their real usage is known.
 
+import type { ExecutionOutputView } from './execution';
 import type { AudioLevelRequest, USBDevice } from './telemetry';
 import type { ClientVariableView, VariableView } from './variables';
 import type {
@@ -429,6 +430,11 @@ export interface ShowTrakAPI {
   // Re-run the retryable failures among these executions (scripts and
   // integrated-device events), replacing their rows in the panel.
   RetryScriptExecutions(RequestIDs: string[]): Promise<unknown>;
+  // An execution's console history after AfterSeq (0 = from the start).
+  GetScriptExecutionOutput(
+    RequestID: string,
+    AfterSeq: number
+  ): Promise<ResultTuple<ExecutionOutputView>>;
   DeleteScripts(List: unknown): Promise<unknown>;
   UpdateScripts(List: unknown): Promise<unknown>;
   GetScriptManagerList(): Promise<ScriptManagerEntry[]>;

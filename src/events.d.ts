@@ -25,6 +25,7 @@ import type { IntegratedAction, IntegratedState } from './integrated';
 import type {
   ExecutionRequestID,
   LaunchConfigPayload,
+  ScriptOutputChunk,
   UpdateSoftwareFromLANPayload,
 } from './execution';
 import type { VariableEnvironment, VariablePayload } from './variables';
@@ -100,6 +101,16 @@ export interface ClientToServerEvents {
     requestId: ExecutionRequestID,
     progress: number,
     statusText: string
+  ) => void;
+  /**
+   * Console output of a running script, batched. Only sent to a server that
+   * advertises `ExecutionOutput`; `truncated` is true on the batch after which
+   * the client stops sending (its per-run cap was reached).
+   */
+  ScriptExecutionOutput: (
+    requestId: ExecutionRequestID,
+    chunks: ScriptOutputChunk[],
+    truncated?: boolean
   ) => void;
 }
 

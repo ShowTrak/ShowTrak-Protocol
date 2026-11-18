@@ -515,4 +515,9 @@ export interface StorageSnapshot {
 export interface ServerCapabilities {
   /** Whether the server accepts the `*Delta` events. */
   Deltas: boolean;
+  /**
+   * Whether the server accepts `ScriptExecutionOutput` (a running script's
+   * console). Absent on older servers, which the client must not send it to.
+   */
+  ExecutionOutput?: boolean;
 }
