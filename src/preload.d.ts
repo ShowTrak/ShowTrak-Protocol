@@ -426,6 +426,9 @@ export interface ShowTrakAPI {
   // queued or running untouched. Called by the renderer once the execution
   // panel auto-dismisses so the next run starts from an empty list.
   ClearSettledScriptExecutions(): Promise<unknown>;
+  // Re-run the retryable failures among these executions (scripts and
+  // integrated-device events), replacing their rows in the panel.
+  RetryScriptExecutions(RequestIDs: string[]): Promise<unknown>;
   DeleteScripts(List: unknown): Promise<unknown>;
   UpdateScripts(List: unknown): Promise<unknown>;
   GetScriptManagerList(): Promise<ScriptManagerEntry[]>;
