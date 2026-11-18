@@ -255,9 +255,12 @@ export interface ShowTrakAPI {
   GetUpdateManagerStatus(): Promise<ResultTuple<UpdateManagerStatus>>;
   GetUpdateManagerReleases(): Promise<ResultTuple<UpdateReleaseOption[]>>;
   DownloadUpdateManagerRelease(Tag: string): Promise<ResultTuple<UpdateDownloadResult>>;
+  // ConfirmPrerelease: the operator confirmed deploying a pre-release build;
+  // without it the server refuses one.
   DeployUpdateManagerRelease(
     Tag: string,
-    Targets: string[]
+    Targets: string[],
+    ConfirmPrerelease?: boolean
   ): Promise<ResultTuple<UpdateDeployResult>>;
   OnUpdateManagerDownloadProgress(callback: (payload: UpdateDownloadProgress) => void): Unsubscribe;
 

@@ -1668,6 +1668,10 @@ export interface UpdateManagerStatus {
   DownloadedAt: string | null;
   Assets: Array<{ name: string; size: number; url: string }>;
   FeedPath: string;
+  /** Whether the downloaded build is a pre-release (deploying it needs confirmation). */
+  Prerelease?: boolean;
+  /** The server's update channel. Pre-release builds are only offered on 'beta'. */
+  Channel?: 'stable' | 'beta';
 }
 
 export interface UpdateReleaseOption {
@@ -1675,6 +1679,8 @@ export interface UpdateReleaseOption {
   name: string;
   publishedAt: string | null;
   prerelease: boolean;
+  /** Whether the server's update channel lets this release be downloaded and deployed. */
+  selectable?: boolean;
 }
 
 export interface UpdateDownloadProgress {

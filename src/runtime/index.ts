@@ -15,3 +15,4 @@
 export * from './network-errors';
 export * from './checksum';
 export * from './logging';
+export * from './update-channel';
