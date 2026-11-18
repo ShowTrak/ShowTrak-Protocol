@@ -1983,6 +1983,21 @@ export interface StatusHistoryOverview {
   Dummies: Record<string, HistorySample[]>;
   Checks: Record<string, HistorySample[]>;
   Kiosks: Record<string, FreeKioskMetricSample[]>;
+  /**
+   * Present only when the read named clients (the ones expanded in the list):
+   * per client UUID, each monitored item's status series, keyed
+   * `<kind>:<item key>` with kind one of system, app, usb, display, audio, net,
+   * storage (a name-guarded USB group is `usb:usbname:<name>`). The same series
+   * the per-client readers (GetClientUSBHistory, ...) return. Server 3.32.0.
+   */
+  ClientItems?: Record<string, Record<string, HistorySample[]>>;
+  /**
+   * Present only when the read named terminals: per FreeKiosk terminal UUID,
+   * each recorded reading's series keyed by metric key (the armed readings,
+   * plus poll latency), including the sample the window opens on, as `Kiosks`
+   * does. Server 3.32.0.
+   */
+  KioskItems?: Record<string, Record<string, FreeKioskMetricSample[]>>;
 }
 
 export interface ClientApplicationHistorySeries {

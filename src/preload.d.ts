@@ -272,8 +272,13 @@ export interface ShowTrakAPI {
   // Returns the client object directly (or null); NOT a Result tuple.
   GetClient(UUID: string): Promise<ClientView | null>;
   GetClientHistory(UUID: string): Promise<HistorySample[]>;
-  // Every row's overall-status history for the list view, in one read.
-  GetStatusHistoryOverview(): Promise<StatusHistoryOverview>;
+  // Every row's overall-status history for the list view, in one read; plus
+  // the monitored-item series of the clients and terminals named (expanded in
+  // the list).
+  GetStatusHistoryOverview(Expanded?: {
+    Clients?: string[];
+    Kiosks?: string[];
+  }): Promise<StatusHistoryOverview>;
   GetClientApplicationHistory(UUID: string): Promise<ClientApplicationHistorySeries[]>;
   GetClientUSBHistory(UUID: string): Promise<ClientUSBHistorySeries[]>;
   GetClientDisplayHistory(UUID: string): Promise<ClientDisplayHistorySeries[]>;
