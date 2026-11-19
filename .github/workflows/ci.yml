@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, format, typecheck & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tooling/package-lock.json
+
+      # The lint/format/TypeScript tooling lives in tooling/ with its own
+      # package.json, not the root one (see tooling/lint.config.mjs for why).
+      - name: Install tooling
+        run: npm run setup
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # The runtime half (src/runtime) is real JavaScript the apps require, so
+      # it has to compile, not just typecheck.
+      - name: Build
+        run: npm run build

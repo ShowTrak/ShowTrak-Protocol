@@ -1,0 +1,17 @@
+{
+  "name": "@showtrak/protocol-tooling",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Lint, format and TypeScript tooling for working on ShowTrak-Protocol itself. Kept out of the root package.json so the apps that check this repo out as shared/ do not install it.",
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "~5.7",
+    "typescript-eslint": "^8.72.2"
+  }
+}

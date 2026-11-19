@@ -103,8 +103,16 @@ the map **and** implement it on both sides in the same change; a listener with n
 emitter (or vice versa) is exactly the drift this repo exists to prevent.
 
 ```sh
-npm run typecheck   # tsc --noEmit
+npm run setup         # once: installs the tooling in tooling/
+npm run lint          # ESLint, with ShowTrak Server's rules
+npm run format        # Prettier (format:check to only check)
+npm run typecheck     # tsc --noEmit
+npm run build         # compiles src/runtime to dist/runtime
 ```
+
+CI runs all of these on every push. The tooling has its own `package.json` in
+`tooling/` rather than the root one: the apps install this repo as a `file:`
+dependency, and npm would otherwise install its tooling into every app too.
 
 Consumers pick the change up by bumping their submodule pointer:
 
@@ -114,12 +122,12 @@ cd shared && git pull origin main && cd .. && git add shared
 
 ## Part of ShowTrak
 
-| App | What it does |
-| --- | --- |
-| **[ShowTrak Server](https://showtrak.co.uk/software/server)** | Monitor and control every computer and show device from one screen. |
+| App                                                           | What it does                                                                |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **[ShowTrak Server](https://showtrak.co.uk/software/server)** | Monitor and control every computer and show device from one screen.         |
 | **[ShowTrak Client](https://showtrak.co.uk/software/client)** | The lightweight app that lets ShowTrak Server watch and control a computer. |
-| **[ShowTrak Timers](https://showtrak.co.uk/software/timers)** | Show timers run from the desk, a Stream Deck, QLab or any browser. |
-| **[ShowTrak Portal](https://showtrak.co.uk)** | Show reports, schedules and team collaboration for live productions. |
+| **[ShowTrak Timers](https://showtrak.co.uk/software/timers)** | Show timers run from the desk, a Stream Deck, QLab or any browser.          |
+| **[ShowTrak Portal](https://showtrak.co.uk)**                 | Show reports, schedules and team collaboration for live productions.        |
 
 Find everything at **[showtrak.co.uk](https://showtrak.co.uk)**.
 
