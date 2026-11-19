@@ -1773,7 +1773,9 @@ export type OSCBulkActionType =
   | 'OpenClientModal'
   | 'CloseModals'
   | 'SetCompactView'
-  | 'ToggleCompactView';
+  | 'ToggleCompactView'
+  // Args is the layout to show: 'grid', 'compact' or 'list'.
+  | 'SetViewMode';
 
 export interface DebugTrafficEntry {
   protocol: 'osc';
