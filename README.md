@@ -90,6 +90,7 @@ src/
   events.d.ts         # Socket.IO client<->server event maps
   views.d.ts          # server view models (server + Web UI)
   preload.d.ts        # ShowTrak Server's Electron preload bridge contract
+e2e/                  # end-to-end checks with real built apps (see e2e/README.md)
 ```
 
 `views.d.ts` and `preload.d.ts` describe **server-internal** surfaces rather than
@@ -119,6 +120,13 @@ Consumers pick the change up by bumping their submodule pointer:
 ```sh
 cd shared && git pull origin main && cd .. && git add shared
 ```
+
+## End-to-end checks
+
+[`e2e/`](e2e/README.md) runs real built apps against each other: new and released
+Servers and Clients in every upgrade pairing, the Companion modules, and the QLab
+definition. CI runs it nightly, on changes to it, and from the Server and Client
+release workflows, so nothing is published that breaks an older install.
 
 ## Part of ShowTrak
 

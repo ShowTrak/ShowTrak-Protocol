@@ -1,0 +1,231 @@
+name: E2E
+
+# Cross-repo end-to-end checks with real built apps (see e2e/README.md):
+#   - interop: the new Server and Client against each other and against the
+#     latest published releases, both ways round (users upgrade one at a time).
+#   - integrations: every released Companion module and the new one against the
+#     new Server, and the QLab definition (released and main) against it.
+#
+# Runs nightly against main, on changes to the harness, by hand with any refs,
+# and from the Server and Client release workflows (workflow_call) so nothing
+# is published that breaks an older install.
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  push:
+    paths:
+      - 'e2e/**'
+      - '.github/workflows/e2e.yml'
+  workflow_dispatch:
+    inputs:
+      server_ref:
+        description: ShowTrakServer ref to test (branch, tag or SHA)
+        default: main
+      client_ref:
+        description: ShowTrakClient ref to test
+        default: main
+      old_server_refs:
+        description: Older servers to pair with the new client (comma-separated; "latest" = newest release)
+        default: latest
+      old_client_refs:
+        description: Older clients to pair with the new server (comma-separated; "latest" = newest release)
+        default: latest
+      module_ref:
+        description: companion-module-showtrak-server ref for the "new" module
+        default: main
+      old_module_refs:
+        description: Released Companion modules to keep working (comma-separated tags)
+        default: v1.0.0,v1.1.0,v1.2.0
+  workflow_call:
+    inputs:
+      server_ref:
+        type: string
+        default: main
+      client_ref:
+        type: string
+        default: main
+      old_server_refs:
+        type: string
+        default: latest
+      old_client_refs:
+        type: string
+        default: latest
+      module_ref:
+        type: string
+        default: main
+      old_module_refs:
+        type: string
+        default: v1.0.0,v1.1.0,v1.2.0
+      harness_ref:
+        description: ShowTrak-Protocol ref whose e2e/ harness to run
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.repository }}-${{ github.ref }}-${{ inputs.server_ref || 'main' }}-${{ inputs.client_ref || 'main' }}
+  cancel-in-progress: true
+
+env:
+  SERVER_REF: ${{ inputs.server_ref || 'main' }}
+  CLIENT_REF: ${{ inputs.client_ref || 'main' }}
+  OLD_SERVER_REFS: ${{ inputs.old_server_refs || 'latest' }}
+  OLD_CLIENT_REFS: ${{ inputs.old_client_refs || 'latest' }}
+  MODULE_REF: ${{ inputs.module_ref || 'main' }}
+  OLD_MODULE_REFS: ${{ inputs.old_module_refs || 'v1.0.0,v1.1.0,v1.2.0' }}
+  # Run output (sandboxes and app logs) for the failure artifact.
+  ST_E2E_WORK: ${{ github.workspace }}/e2e-work
+  APPS: ${{ github.workspace }}/e2e-apps
+  # prepare.js reads the latest releases through the API; authenticated calls
+  # are not rate limited the way anonymous ones are.
+  GITHUB_TOKEN: ${{ github.token }}
+
+jobs:
+  interop:
+    name: Interop matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout harness
+        uses: actions/checkout@v7
+        with:
+          repository: ShowTrak/ShowTrak-Protocol
+          ref: ${{ inputs.harness_ref || github.sha }}
+          path: protocol
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # xvfb: the apps are Electron and need a display. libudev: the client's
+      # usb addon builds against it.
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libudev-dev
+
+      - name: Install harness
+        working-directory: protocol/e2e
+        run: npm ci
+
+      - name: Build apps
+        working-directory: protocol/e2e
+        run: |
+          node prepare.js --app server --ref "$SERVER_REF" --dest "$APPS/server-new"
+          node prepare.js --app client --ref "$CLIENT_REF" --dest "$APPS/client-new"
+          old_servers=(); old_clients=()
+          IFS=',' read -ra refs <<< "$OLD_SERVER_REFS"
+          for r in "${refs[@]}"; do
+            node prepare.js --app server --ref "$r" --dest "$APPS/server-old-$r"
+            old_servers+=("$APPS/server-old-$r")
+          done
+          IFS=',' read -ra refs <<< "$OLD_CLIENT_REFS"
+          for r in "${refs[@]}"; do
+            node prepare.js --app client --ref "$r" --dest "$APPS/client-old-$r"
+            old_clients+=("$APPS/client-old-$r")
+          done
+          echo "OLD_SERVERS=$(IFS=,; echo "${old_servers[*]}")" >> "$GITHUB_ENV"
+          echo "OLD_CLIENTS=$(IFS=,; echo "${old_clients[*]}")" >> "$GITHUB_ENV"
+
+      - name: Run the matrix
+        working-directory: protocol/e2e
+        run: >-
+          xvfb-run -a node matrix.js
+          --server "$APPS/server-new" --client "$APPS/client-new"
+          --old-server "$OLD_SERVERS" --old-client "$OLD_CLIENTS"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-interop-logs
+          path: |
+            ${{ env.ST_E2E_WORK }}/**/*.log
+            ${{ env.ST_E2E_WORK }}/**/*.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  integrations:
+    name: Companion module and QLab definition
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout harness
+        uses: actions/checkout@v7
+        with:
+          repository: ShowTrak/ShowTrak-Protocol
+          ref: ${{ inputs.harness_ref || github.sha }}
+          path: protocol
+
+      - name: Checkout QLab definition
+        uses: actions/checkout@v7
+        with:
+          repository: ShowTrak/ShowTrak-QLabNetworkDeviceDescription
+          path: qlab
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libudev-dev
+
+      - name: Enable Corepack (the Companion module uses Yarn 4)
+        run: corepack enable
+
+      - name: Install harness
+        working-directory: protocol/e2e
+        run: npm ci
+
+      - name: Build apps and modules
+        working-directory: protocol/e2e
+        run: |
+          node prepare.js --app server --ref "$SERVER_REF" --dest "$APPS/server-new"
+          node prepare.js --app client --ref "$CLIENT_REF" --dest "$APPS/client-new"
+          node prepare.js --app companion --ref "$MODULE_REF" --dest "$APPS/module-new"
+          old_modules=()
+          IFS=',' read -ra refs <<< "$OLD_MODULE_REFS"
+          for r in "${refs[@]}"; do
+            node prepare.js --app companion --ref "$r" --dest "$APPS/module-$r"
+            old_modules+=("$APPS/module-$r")
+          done
+          echo "OLD_MODULES=$(IFS=,; echo "${old_modules[*]}")" >> "$GITHUB_ENV"
+
+      # The released definition (what QLab users import) and main.
+      - name: Fetch the released QLab definition
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo ShowTrak/ShowTrak-QLabNetworkDeviceDescription \
+            --pattern '*.qlabnetwork' --dir "$APPS/qlab-release"
+          echo "QLAB_RELEASED=$(ls "$APPS"/qlab-release/*.qlabnetwork | head -1)" >> "$GITHUB_ENV"
+
+      - name: QLab definition
+        working-directory: protocol/e2e
+        run: node qlab/check.js --ndd "$GITHUB_WORKSPACE/qlab/showtrak-server.json,$QLAB_RELEASED" --server "$APPS/server-new"
+
+      - name: Companion modules
+        if: ${{ !cancelled() }}
+        working-directory: protocol/e2e
+        run: >-
+          xvfb-run -a node companion/run.js
+          --server "$APPS/server-new" --client "$APPS/client-new"
+          --module "$APPS/module-new" --old-modules "$OLD_MODULES"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-integrations-logs
+          path: |
+            ${{ env.ST_E2E_WORK }}/**/*.log
+            ${{ env.ST_E2E_WORK }}/**/*.json
+          retention-days: 14
+          if-no-files-found: ignore

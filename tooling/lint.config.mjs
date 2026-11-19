@@ -18,7 +18,7 @@ import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
   {
-    ignores: ['**/node_modules/**', 'dist/**'],
+    ignores: ['**/node_modules/**', 'dist/**', 'e2e/work/**'],
   },
   {
     files: ['**/*.{js,mjs,cjs}'],

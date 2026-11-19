@@ -1,0 +1,21 @@
+{
+  "name": "@showtrak/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "End-to-end checks across ShowTrak Server, Client, SDK, Companion module and QLab definition, run against real built apps. Kept out of the root package.json so the apps that check this repo out as shared/ do not install it.",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "interop": "node interop.js",
+    "matrix": "node matrix.js",
+    "companion": "node companion/run.js",
+    "qlab": "node qlab/check.js",
+    "prepare-app": "node prepare.js"
+  },
+  "dependencies": {
+    "@showtrak/server-sdk": "^1.8.1",
+    "socket.io-client": "^4.8.1"
+  }
+}
