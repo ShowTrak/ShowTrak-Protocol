@@ -1,4 +1,19 @@
-# @showtrak/protocol
+<div align="center">
+
+<a href="https://showtrak.co.uk"><img src="https://showtrak.co.uk/images/logo.png" alt="ShowTrak Protocol logo" width="128" height="128"></a>
+
+# ShowTrak Protocol
+
+**The shared message definitions that let every ShowTrak app talk to each other.**
+
+[Website](https://showtrak.co.uk) · [Discord](https://discord.gg/DACmwsbSGW)
+
+[![TypeScript][badge-typescript]](https://showtrak.co.uk)
+
+</div>
+
+Behind the scenes code shared by ShowTrak Server, ShowTrak Client and the ShowTrak SDKs. There is
+nothing here to download or install: to use ShowTrak, head to [showtrak.co.uk](https://showtrak.co.uk).
 
 Shared **wire-protocol type definitions** for the ShowTrak platform: the payload
 shapes exchanged over Socket.IO between:
@@ -97,6 +112,23 @@ Consumers pick the change up by bumping their submodule pointer:
 cd shared && git pull origin main && cd .. && git add shared
 ```
 
-## License
+## Part of ShowTrak
 
-AGPL-3.0-only, matching the rest of the ShowTrak platform.
+| App | What it does |
+| --- | --- |
+| **[ShowTrak Server](https://showtrak.co.uk/software/server)** | Monitor and control every computer and show device from one screen. |
+| **[ShowTrak Client](https://showtrak.co.uk/software/client)** | The lightweight app that lets ShowTrak Server watch and control a computer. |
+| **[ShowTrak Timers](https://showtrak.co.uk/software/timers)** | Show timers run from the desk, a Stream Deck, QLab or any browser. |
+| **[ShowTrak Portal](https://showtrak.co.uk)** | Show reports, schedules and team collaboration for live productions. |
+
+Find everything at **[showtrak.co.uk](https://showtrak.co.uk)**.
+
+## Support
+
+Questions, ideas or problems? Join the [ShowTrak Discord](https://discord.gg/DACmwsbSGW) or [open an issue](https://github.com/ShowTrak/ShowTrak-Protocol/issues).
+
+## Licence
+
+ShowTrak Protocol is free and open source under the [GNU AGPL-3.0](LICENSE).
+
+[badge-typescript]: https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white
