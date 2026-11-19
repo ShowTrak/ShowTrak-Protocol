@@ -388,6 +388,14 @@ export interface ShowTrakAPI {
   /** Answer the pending upgrade: true backs the file up and upgrades it. */
   ResolveShowFileUpgrade(Accept: boolean): Promise<ResultTuple<unknown>>;
   OnShowFileUpdated(callback: (payload: unknown) => void): Unsubscribe;
+  /**
+   * Open the show file the operating system asked for (double-clicked, or Open
+   * With), asking before it replaces the open show. [null, null] when none is
+   * waiting or it is already open.
+   */
+  OpenRequestedShow(): Promise<ResultTuple<ShowFileOpenOutcome>>;
+  /** A show file was opened from the operating system: call OpenRequestedShow. */
+  OnShowOpenRequested(callback: () => void): Unsubscribe;
 
   // ---- Folders ----------------------------------------------------------
   OpenLogsFolder(): Promise<unknown>;
