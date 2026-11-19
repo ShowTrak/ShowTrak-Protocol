@@ -8,7 +8,7 @@
 
 [Website](https://showtrak.co.uk) · [Discord](https://discord.gg/DACmwsbSGW)
 
-[![TypeScript][badge-typescript]](https://showtrak.co.uk)
+[![TypeScript][badge-typescript]](https://showtrak.co.uk) [![CI status][badge-ci]](https://github.com/ShowTrak/ShowTrak-Protocol/actions/workflows/ci.yml)
 
 </div>
 
@@ -140,3 +140,4 @@ Questions, ideas or problems? Join the [ShowTrak Discord](https://discord.gg/DAC
 ShowTrak Protocol is free and open source under the [GNU AGPL-3.0](LICENSE).
 
 [badge-typescript]: https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white
+[badge-ci]: https://img.shields.io/github/actions/workflow/status/ShowTrak/ShowTrak-Protocol/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI
