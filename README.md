@@ -96,6 +96,68 @@ mapping resolves to an empty directory:
 Clone consumers with `git clone --recursive`, or run
 `git submodule update --init --recursive` in an existing checkout.
 
+## The renderer kit
+
+`src/ui` is browser code that ShowTrak Server and ShowTrak Timers both run in
+their renderers (Server's window and Web UI, Timers' window), so a fix is made
+once rather than ported by hand. Like `src/runtime` it is real code:
+`npm run build:ui` compiles it to `dist/ui` (CommonJS plus declarations), and
+each module is its own entry point, `@showtrak/protocol/ui/<module>`, so an
+app's bundle only carries what it imports.
+
+| Module                                   | What it holds                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| `ui/app-updates`                         | The Software Update modal (`CreateAppUpdates`)                     |
+| `ui/confirm-dialog`                      | The confirmation dialog (`CreateConfirmationDialog`)               |
+| `ui/toasts`                              | Alert-style toasts and `Notify` (`CreateToasts`)                   |
+| `ui/modal-header`                        | The modal titlebar (`buildModalHeader`)                            |
+| `ui/markdown`                            | Release notes: safe Markdown rendering and the HTML sanitizer      |
+| `ui/qr-svg`                              | QR codes as SVG strings (`QrToSvg`)                                |
+| `ui/menu-placement`, `ui/menu-typeahead` | The right-click menu's placement and type-to-search                |
+| `ui/settings-tabs`                       | Which Preferences tab shows, and how a setting's value reads       |
+| `ui/html`, `ui/errors`, `ui/icons`       | `Safe`, `ErrorMessage`, `HandleNonFatalError`, an app's icon style |
+
+What differs between the apps (names, icon style, which buttons open what, the
+preload API, what the app does around a dialog) is passed in once, in the app's
+own module, which re-exports the result:
+
+```ts
+// ShowTrak Timers, src/UI/js/app/lib/toasts.ts
+export const { Notify, showAlertStyleToast, iconForType } = CreateToasts({ IconStyle: 'fill' });
+export const ConfirmationDialog = CreateConfirmationDialog({
+  OnActiveChange: (Active) => setConfirmDialogActive(Active),
+});
+```
+
+An app builds the kit with its own TypeScript and typechecks against the built
+declarations:
+
+```jsonc
+// package.json
+"build:shared": "tsc -p shared/tsconfig.build.json && tsc -p shared/tsconfig.build.ui.json"
+
+// tsconfig.renderer.json and tsconfig.renderer.test.json
+"paths": {
+  "@showtrak/protocol": ["./shared/src/index.d.ts"],
+  "@showtrak/protocol/ui/*": ["./shared/dist/ui/*"],
+  "@showtrak/protocol/*": ["./shared/src/*"]
+},
+"include": [/* the app's own */ "shared/src/ui/vendors.d.ts"]
+```
+
+The rules for code in `src/ui`:
+
+- It belongs here only when both apps run the same logic. One app's surfaces
+  (Server's execution panel, Timers' Web Dashboard) stay in that app.
+- jQuery, Bootstrap and Howler are page globals loaded by `<script>` tags and
+  are never imported. `src/ui/vendors.d.ts` declares Bootstrap and Howler for
+  both apps, so an app does not declare them again; `@types/jquery` types `$`.
+- Nothing runs at import time: the apps' renderer tests `require()` these files
+  under plain Node, with no `document`, `window` or `$`.
+
+`spec/ui` covers each module in each app's configuration, against `dist/ui`,
+with a small fake page (`spec/ui/helpers/fake-dom.js`) rather than jsdom.
+
 ## Layout
 
 ```text
@@ -120,7 +182,9 @@ src/
   client/             # @showtrak/protocol/client: ShowTrak Client's preloads, profile
   timers/             # @showtrak/protocol/timers: ShowTrak Timers' IPC, views, Web Dashboard
   runtime/            # @showtrak/protocol/runtime: the runtime code the apps share
+  ui/                 # @showtrak/protocol/ui/*: the renderer kit (see below)
 type-tests/           # compile-time assertions about src/, run by npm run typecheck
+spec/                 # behaviour specs for the compiled code, run by npm test
 e2e/                  # end-to-end checks with real built apps (see e2e/README.md)
 ```
 
@@ -131,7 +195,7 @@ renderer), its view models, what it persists for later releases to read, and
 any socket it serves. Types that describe an app's internal module wiring,
 used inside one process of one app, stay in that app.
 
-Everything outside `src/runtime` is types only. Where a contract has a runtime
+Everything outside `src/runtime` and `src/ui` is types only. Where a contract has a runtime
 half, such as an app's channel allowlist, the values stay in the app and are
 checked against the types here. `ChannelListCheck` proves a list names exactly
 the declared channels, both ways:
@@ -166,7 +230,8 @@ npm run setup         # once: installs the tooling in tooling/
 npm run lint          # ESLint, with ShowTrak Server's rules
 npm run format        # Prettier (format:check to only check)
 npm run typecheck     # tsc --noEmit, plus the type tests
-npm run build         # compiles src/runtime to dist/runtime
+npm run build         # compiles src/runtime to dist/runtime and src/ui to dist/ui
+npm test              # builds, then runs the specs in spec/
 ```
 
 CI runs all of these on every push. The tooling has its own `package.json` in
