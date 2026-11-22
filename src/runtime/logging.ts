@@ -17,6 +17,8 @@
 // The Client had already fixed that; the Server had not. Deriving it in one
 // place is the point of this module.
 
+import type { LoggerLike } from './network-errors';
+
 /** Severity ordering. A message is emitted when its rank <= the active level. */
 export const LEVEL_RANK: Readonly<Record<string, number>> = {
   error: 0,
@@ -39,6 +41,16 @@ export interface DefaultLevelInputs {
    * apps' test suites load their Logger directly).
    */
   isPackagedBuild: boolean;
+}
+
+/**
+ * The part of an app's logger the shared modules write to: what an app's
+ * `CreateLogger(alias)` returns, narrowed to the three levels they use.
+ * Structural, like LoggerLike, so this package never depends on an app's
+ * Logger and a test can pass a plain object.
+ */
+export interface AppLoggerLike extends LoggerLike {
+  log(...args: unknown[]): void;
 }
 
 /**
