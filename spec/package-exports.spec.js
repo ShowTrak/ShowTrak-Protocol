@@ -48,7 +48,12 @@ test('the entry points load by package name', () => {
   assert.equal(typeof Common.ParseArgumentString, 'function');
 
   const Runtime = require('@showtrak/protocol/runtime');
-  for (const Name of ['CreateAppLogging', 'InstallProcessGuards', 'WriteAndSyncFileSync']) {
+  for (const Name of [
+    'CreateAppLogging',
+    'InstallProcessGuards',
+    'WriteAndSyncFileSync',
+    'ReplaceFileSync',
+  ]) {
     assert.equal(typeof Runtime[Name], 'function', Name);
   }
   // What was there before is still there.
