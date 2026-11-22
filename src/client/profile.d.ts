@@ -3,6 +3,13 @@
 // upgrade, written by the e2e harness to seed an adopted client, and handed to
 // the config window (`Loaded`, `SetProfile`), so its shape is a contract
 // across versions and across processes, not just inside one module.
+//
+// The small state files kept beside them (ScriptDeploymentState.json,
+// Variables.json, UpdateChannel.json) are read back by later releases too, so
+// they are declared here as well.
+
+import type { UpdateChannel } from '../app';
+import type { VariablePayload } from '../variables';
 
 /** Where a client's hardware identity was derived from, best first. */
 export type IdentitySource = 'firmware' | 'mac' | 'random';
@@ -59,4 +66,41 @@ export interface ClientProfile {
   ServerIdentityLock?: string;
   /** Keys older or newer releases wrote are kept as they are. */
   [key: string]: unknown;
+}
+
+// ---- State files beside the profile -----------------------------------------
+//
+// Later releases read each one back after an upgrade. A missing, unreadable or
+// unrecognised file reads as the default noted, never as an error.
+
+/**
+ * ScriptDeploymentState.json: the script deployment last applied in full. Its
+ * fingerprint is reported in every `Heartbeat` (`ScriptsFingerprint`), and the
+ * Server redeploys when it differs from its own catalog's. Anything but a
+ * string reads as null: nothing applied yet.
+ */
+export interface ScriptDeploymentState {
+  LastAppliedDeploymentFingerprint: string | null;
+  /** When it was written, ms since epoch. Never read back. */
+  UpdatedAt: number;
+}
+
+/**
+ * Variables.json: the show variables the Server last pushed, kept so the tray
+ * menu and run-on-launch can run scripts before (or without) a connection.
+ * Read back through the same sanitising as a push: names must match
+ * `SHOWTRAK_VAR_[A-Z0-9_]+`, values are coerced to strings, and an `Exported`
+ * name missing from `Environment` is dropped.
+ */
+export interface VariablesState extends VariablePayload {
+  /** When it was written, ms since epoch. Never read back. */
+  UpdatedAt: number;
+}
+
+/**
+ * UpdateChannel.json: the update channel chosen in the config window. Anything
+ * but a known channel reads as 'stable'; a factory reset deletes the file.
+ */
+export interface UpdateChannelState {
+  Channel: UpdateChannel;
 }
