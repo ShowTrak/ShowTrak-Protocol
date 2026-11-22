@@ -1,0 +1,21 @@
+{
+  // ../tsconfig.build.json for this repo on its own (`npm run build`, `npm run
+  // typecheck`, CI): the same program and output, with its bare imports
+  // resolved from tooling/node_modules.
+  //
+  // The apps run ../tsconfig.build.json directly, where @types/node, electron
+  // and electron-updater resolve from the app's own node_modules by walking up
+  // from shared/. A checkout of this repo has no node_modules on that path (the
+  // tooling lives here, see lint.config.mjs for why), so this points the types
+  // and the two Electron packages at the copies installed by `npm run setup`.
+  // Only types are read: setup installs with --ignore-scripts, so no Electron
+  // binary is downloaded.
+  "extends": "../tsconfig.build.json",
+  "compilerOptions": {
+    "typeRoots": ["./node_modules/@types"],
+    "paths": {
+      "electron": ["./node_modules/electron/electron.d.ts"],
+      "electron-updater": ["./node_modules/electron-updater/out/main.d.ts"]
+    }
+  }
+}

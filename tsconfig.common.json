@@ -1,0 +1,15 @@
+{
+  // Typechecks src/common (@showtrak/protocol/common) with nothing but the
+  // language: no Node, no DOM, no Electron. That entry point is loaded by main
+  // processes and bundled into renderers alike, so anything it uses beyond
+  // ES2022 would break one of them; here it is a compile error instead.
+  // tsconfig.build.json emits it (with Node's types in scope, so it cannot
+  // enforce this); `npm run typecheck` runs this.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/common/**/*.ts"]
+}

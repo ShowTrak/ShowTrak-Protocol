@@ -2,7 +2,7 @@
   "name": "@showtrak/protocol",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared ShowTrak type definitions: the wire protocol between ShowTrak apps (client <-> server <-> SDK), every app's process-boundary contracts, and the small amount of runtime infrastructure the apps execute. Consumed as a git submodule at shared/.",
+  "description": "Shared ShowTrak code: the wire protocol between ShowTrak apps (client <-> server <-> SDK), every app's process-boundary contracts, and the runtime code, Electron main-process helpers and build scripts the desktop apps share. Consumed as a git submodule at shared/.",
   "license": "AGPL-3.0-only",
   "types": "src/index.d.ts",
   "typesVersions": {
@@ -12,6 +12,15 @@
       ],
       "timers": [
         "src/timers/index.d.ts"
+      ],
+      "runtime": [
+        "dist/runtime/index.d.ts"
+      ],
+      "common": [
+        "dist/common/index.d.ts"
+      ],
+      "electron": [
+        "dist/electron/index.d.ts"
       ]
     }
   },
@@ -28,13 +37,22 @@
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "default": "./dist/runtime/index.js"
+    },
+    "./common": {
+      "types": "./dist/common/index.d.ts",
+      "default": "./dist/common/index.js"
+    },
+    "./electron": {
+      "types": "./dist/electron/index.d.ts",
+      "default": "./dist/electron/index.js"
     }
   },
   "scripts": {
-    "setup": "npm ci --prefix tooling",
-    "build": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.json --typeRoots ./tooling/node_modules/@types",
+    "setup": "npm ci --prefix tooling --ignore-scripts",
+    "build": "node tooling/build.js",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "typecheck": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit && node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.json --noEmit --typeRoots ./tooling/node_modules/@types && node tooling/node_modules/typescript/bin/tsc -p type-tests/tsconfig.json && node tooling/node_modules/typescript/bin/tsc -p type-tests/tsconfig.exports.json",
+    "typecheck": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit && node tooling/node_modules/typescript/bin/tsc -p tooling/tsconfig.build.json --noEmit && node tooling/node_modules/typescript/bin/tsc -p tsconfig.common.json && node tooling/node_modules/typescript/bin/tsc -p type-tests/tsconfig.json && node tooling/node_modules/typescript/bin/tsc -p type-tests/tsconfig.exports.json",
+    "test": "npm run build && node --test \"spec/**/*.spec.js\"",
     "lint": "node tooling/node_modules/eslint/bin/eslint.js -c tooling/lint.config.mjs .",
     "format": "node tooling/node_modules/prettier/bin/prettier.cjs \"**/*.{js,mjs,cjs,ts,md,json,yml}\" --write",
     "format:check": "node tooling/node_modules/prettier/bin/prettier.cjs \"**/*.{js,mjs,cjs,ts,md,json,yml}\" --check"

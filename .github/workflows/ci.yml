@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Lint, format, typecheck & build
+    name: Lint, format, typecheck, build & test
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -42,7 +42,12 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      # The runtime half (src/runtime) is real JavaScript the apps require, so
-      # it has to compile, not just typecheck.
+      # The runtime half (src/runtime, src/common, src/electron) is real
+      # JavaScript the apps require, so it has to compile, not just typecheck.
       - name: Build
         run: npm run build
+
+      # The specs (spec/**/*.spec.js) run against the build, with Electron
+      # stubbed; npm test builds first.
+      - name: Test
+        run: npm test

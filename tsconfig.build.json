@@ -1,25 +1,35 @@
 {
-  // Emits the shared RUNTIME entry point (src/runtime -> dist/runtime).
+  // Emits the shared RUNTIME code, one entry point per folder:
+  //   src/runtime  -> dist/runtime   @showtrak/protocol/runtime   (Node-only)
+  //   src/common   -> dist/common    @showtrak/protocol/common    (isomorphic)
+  //   src/electron -> dist/electron  @showtrak/protocol/electron  (Electron main process)
   //
   // Separate from tsconfig.json, which typechecks the ambient .d.ts protocol
   // declarations with noEmit. Those two jobs are genuinely different: the
   // declarations are erased at build time and are consumed straight from source
-  // by both apps' tsconfig `paths`, whereas everything under src/runtime is real
-  // JavaScript that has to exist on disk for Node to require it.
+  // by the apps' tsconfig `paths`, whereas the three folders above are real
+  // JavaScript that has to exist on disk for Node (and the apps' bundlers) to
+  // load it.
+  //
+  // This is the config the apps run (`npm run build:shared`, with their own
+  // TypeScript), so it names no tooling of this repo's: every bare import
+  // (@types/node, electron, electron-updater) resolves from the consuming app's
+  // node_modules, which module resolution and typeRoots find by walking up from
+  // shared/. Working on this repo on its own, tooling/tsconfig.build.json points
+  // the same program at tooling/node_modules instead.
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src/runtime",
-    "outDir": "./dist/runtime",
+    "rootDir": "./src",
+    "outDir": "./dist",
     "noEmit": false,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     // The base config sets `types: []` because the ambient protocol declarations
-    // must not depend on any environment. Runtime code does: it uses node:crypto,
-    // node:fs and Buffer. @types/node resolves from the consuming app's
-    // node_modules, which typeRoots finds by walking up from this directory;
-    // the submodule has no node_modules of its own and does not need one.
+    // must not depend on any environment. Runtime and Electron code does: it
+    // uses node:crypto, node:fs and Buffer. src/common must not, which
+    // tsconfig.common.json enforces (this program cannot: it sees Node's types).
     "types": ["node"]
   },
-  "include": ["src/runtime/**/*.ts"]
+  "include": ["src/runtime/**/*.ts", "src/common/**/*.ts", "src/electron/**/*.ts"]
 }
