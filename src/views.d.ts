@@ -27,6 +27,7 @@ import type {
 } from './telemetry';
 import type { Vitals } from './vitals';
 import type { IntegratedAction } from './integrated';
+import type { ScriptCatalogEntry, ScriptConfirmationLevel, ScriptConsoleFilter } from './scripts';
 
 /**
  * The conditions a critical USB device (by serial or by name) must keep. A
@@ -747,23 +748,6 @@ export interface ScriptManagerEntry {
   issues: string[];
 }
 
-/**
- * Per-script client/group whitelist scope (same shape as AlertRuleScope).
- * `Workspace: true` OR a null/absent scope both mean "all clients" (the
- * unrestricted default). `Workspace: false` restricts to the listed groups
- * (by GroupID), tags (by TagID) and clients (by UUID); an empty list therefore
- * means "no clients may run this script".
- *
- * `Tags` is optional on the wire: rows written before tag support omit it and
- * an absent list means "no tags", never "all".
- */
-export interface ScriptWhitelistScope {
-  Workspace: boolean;
-  Groups: number[];
-  Clients: string[];
-  Tags?: number[];
-}
-
 /** `GetScriptConfig` editable form (ScriptManager `GetEditable`). */
 export interface ScriptEditable {
   id: string;
@@ -779,63 +763,6 @@ export interface ScriptEditable {
   consoleFilter: ScriptConsoleFilter;
   files: string[];
   valid: boolean;
-}
-
-/**
- * Console filter applied CLIENT-SIDE while a script runs: only console lines
- * matching `Pattern` under `Mode` are surfaced as the live status tail. Mode
- * `none` (or an empty `Pattern`) disables filtering. When `Strip` is true the
- * matched text is removed from the surfaced line, leaving only the remainder.
- */
-export interface ScriptConsoleFilter {
-  Mode: 'none' | 'startsWith' | 'includes' | 'regex';
-  Pattern: string;
-  Strip: boolean;
-}
-
-export interface ScriptFileEntry {
-  Path: string;
-  Type: 'file' | 'directory';
-  Checksum?: string | null;
-}
-
-/**
- * How hard a script asks before it runs. "Critical" is a full-screen red
- * warning whose default action is Cancel. On disk this is the `Confirmation`
- * boolean plus an optional `ConfirmationStyle: "Critical"`.
- */
-export type ScriptConfirmationLevel = 'None' | 'Standard' | 'Critical';
-
-/** `SetScriptList` push catalog entry (PascalCase; serialized Script class). */
-export interface ScriptCatalogEntry {
-  ID: string;
-  Name: string;
-  Description: string;
-  Colour: number;
-  Icon: string;
-  Weight: number;
-  /** True for both Standard and Critical; kept for consumers that predate levels. */
-  Confirmation: boolean;
-  /** Absent from servers that predate levels: fall back to `Confirmation`. */
-  ConfirmationLevel?: ScriptConfirmationLevel;
-  Timeout?: number;
-  Platforms: Record<string, string>;
-  Arguments: Record<string, string>;
-  CompatiblePlatforms: string[];
-  ConsoleFilter?: ScriptConsoleFilter;
-  isEnabled: boolean;
-  isValid: boolean;
-  ValidationErrors: string[];
-  Config: Record<string, unknown> | null;
-  Files: ScriptFileEntry[];
-  ParseError?: string;
-  RawText?: string;
-  /**
-   * Per-show whitelist scope. `null`/absent means unrestricted (all clients),
-   * the default. Attached to the catalog push from the ScriptWhitelistManager;
-   * consumed by the context menu to hide the script for non-whitelisted clients.
-   */
-  Whitelist?: ScriptWhitelistScope | null;
 }
 
 export interface ScriptExecutionTimer {

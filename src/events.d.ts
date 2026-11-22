@@ -29,11 +29,20 @@ import type {
   UpdateSoftwareFromLANPayload,
 } from './execution';
 import type { VariableEnvironment, VariablePayload } from './variables';
+import type { ScriptCatalogWireEntry, ScriptExecutionResult } from './scripts';
 
 /** Events emitted by the client and handled by the server. */
 export interface ClientToServerEvents {
   AdoptionHeartbeat: (data: AdoptionHeartbeatPayload) => void;
-  GetScripts: (callback: (scripts: unknown) => void) => void;
+  /**
+   * Fetch the server's script catalog, to deploy (`UpdateScripts`), to run on
+   * launch, and to list in the tray. Typed as what ANY supported server sends,
+   * because a client is still adopted by servers older than itself: entries
+   * from Server 3.0.0 - 3.2.x carry a single `Path` and no `Platforms`, and
+   * fields were added release by release (see ScriptCatalogWireEntry). The
+   * current server sends ScriptCatalogEntry, which is assignable to it.
+   */
+  GetScripts: (callback: (scripts: ScriptCatalogWireEntry[]) => void) => void;
   GetLaunchConfig: (callback: (config: LaunchConfigPayload) => void) => void;
   /**
    * Fetch this client's resolved show variables. Requested once per connection,
@@ -92,10 +101,16 @@ export interface ClientToServerEvents {
   DisplayDelta: (delta: DisplayDelta) => void;
   ApplicationDelta: (delta: ApplicationDelta) => void;
   IdentifyStopped: () => void;
+  /**
+   * How a task the server dispatched ended. `error` is null on success; never
+   * an empty string, which the server would read as success. `result` is set
+   * only for `ExecuteScript` (see ScriptExecutionResult) and is ignored by the
+   * server.
+   */
   ScriptExecutionResponse: (
     requestId: ExecutionRequestID,
     error: string | null,
-    result?: unknown
+    result?: ScriptExecutionResult
   ) => void;
   ScriptExecutionProgress: (
     requestId: ExecutionRequestID,

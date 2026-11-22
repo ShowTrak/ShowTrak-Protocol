@@ -14,6 +14,7 @@
 // files are migrated and their real usage is known.
 
 import type { ExecutionOutputView } from './execution';
+import type { ScriptCatalogEntry, ScriptWhitelistScope } from './scripts';
 import type { AudioLevelRequest, USBDevice } from './telemetry';
 import type { ClientVariableView, VariableView } from './variables';
 import type {
@@ -71,11 +72,9 @@ import type {
   NetworkScanEvent,
   OSCBulkActionType,
   OSCRoute,
-  ScriptCatalogEntry,
   ScriptEditable,
   ScriptExecutionView,
   ScriptManagerEntry,
-  ScriptWhitelistScope,
   SettingGroupView,
   SettingView,
   ShowTrakAlert,
