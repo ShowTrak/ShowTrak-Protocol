@@ -26,12 +26,13 @@ It also holds every other contract that crosses a process or network boundary
 in a ShowTrak desktop app (Server, Client and
 **[ShowTrak Timers](https://github.com/ShowTrak/ShowTrakTimers)**): each app's
 Electron preload bridge and IPC channels, its view models, its persisted
-formats, and the Timers Web Dashboard's socket.
+formats, and the Timers Web Dashboard's socket. And it holds the code those
+desktop apps share rather than copy: see [Shared code](#shared-code).
 
 ## Why this repo exists
 
-These types are authored as ambient TypeScript declaration files (`.d.ts`) with
-**no runtime code**. That keeps them:
+The contracts are authored as ambient TypeScript declaration files (`.d.ts`)
+with **no runtime code**. That keeps them:
 
 - **Authoritative**: one definition of the wire, shared by every surface, so a
   change to a payload cannot land on one side only.
@@ -96,11 +97,81 @@ mapping resolves to an empty directory:
 Clone consumers with `git clone --recursive`, or run
 `git submodule update --init --recursive` in an existing checkout.
 
+## Shared code
+
+Besides the contracts, the desktop apps share code that each used to carry its
+own copy of, where a fix to one had to be ported to the others by hand. It is
+compiled JavaScript, in three entry points that `tsconfig.build.json` builds into
+`dist/` (each app runs it as `npm run build:shared`, with its own TypeScript),
+plus plain-JavaScript build scripts:
+
+| Import                        | Source         | What it is                                                                                                                                                                                    | Runs in                   |
+| ----------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `@showtrak/protocol/runtime`  | `src/runtime`  | Node infrastructure: network-error classification, checksums, the update-channel rule, the logging primitives and the Server and Timers logger, the process guards, durable file writes       | main processes            |
+| `@showtrak/protocol/common`   | `src/common`   | Isomorphic helpers: type guards, the loose version order, script argument parsing. Nothing but the language: no Node, DOM or Electron (`tsconfig.common.json` enforces it)                    | main processes, renderers |
+| `@showtrak/protocol/electron` | `src/electron` | Electron main-process helpers: the self-updater and its Squirrel helpers, show file associations, window guards and zoom shortcuts, the first-paint signal, dev reload, the renderer push bus | main processes            |
+| `shared/scripts/*.js`         | `scripts`      | Build, dev, test and release tooling: the main and renderer bundles, assets, CSS, `npm start`, `npm test`, `npm run publish`, the Electron locale trim                                        | Node, when building       |
+
+What holds for all of it:
+
+- **Nothing names an app.** An app's identity (its name, release repository,
+  show file extension, logs folder, logger, window) is always passed in, so an
+  app's own module is a few lines of configuration around the shared one.
+- **Loading is free.** The Electron modules touch Electron only when called,
+  never while loading, so the apps' test suites can load them with `electron`
+  stubbed; heavy dependencies are required lazily (electron-updater, on a
+  packaged build's first update check).
+- **Bare imports come from the app.** `electron`, `electron-updater` and
+  `@types/node` resolve from the app's own `node_modules`, which sits above
+  `shared/`. Working on this repo on its own, they come from `tooling/`
+  (`tooling/tsconfig.build.json`); `npm run setup` installs them with
+  `--ignore-scripts`, so no Electron binary is downloaded.
+
+An app maps each compiled entry point to its **built** declarations, with an
+exact key ahead of the wildcard (pointing one at `shared/src` would drag the
+sources into the app's program, outside its `rootDir`):
+
+```jsonc
+"paths": {
+  "@showtrak/protocol": ["./shared/src/index.d.ts"],
+  "@showtrak/protocol/runtime": ["./shared/dist/runtime/index.d.ts"],
+  "@showtrak/protocol/common": ["./shared/dist/common/index.d.ts"],
+  "@showtrak/protocol/electron": ["./shared/dist/electron/index.d.ts"],
+  "@showtrak/protocol/*": ["./shared/src/*"]
+}
+```
+
+Renderer configs map `@showtrak/protocol/common` the same way. At runtime the
+imports resolve by package name through `exports` (the `file:./shared`
+dependency), and esbuild bundles the compiled files from `shared/dist`.
+
+The scripts are plain CommonJS that needs nothing built (`copy-bootstrap-icons`
+runs on postinstall). An app keeps its own `scripts/<name>.js`, which calls the
+shared one with the app's configuration; the header of each shared script shows
+that wrapper:
+
+```js
+// ShowTrak Server's scripts/build-main.js
+const path = require('node:path');
+const { createMainBundle } = require('../shared/scripts/build-main');
+
+const Bundle = createMainBundle({
+  root: path.resolve(__dirname, '..'),
+  requiredExternals: ['sqlite3', 'electron-updater', 'mqtt'],
+});
+
+module.exports = { mainBundleOptions: Bundle.mainBundleOptions, MAIN_BUNDLE: Bundle.MAIN_BUNDLE };
+
+if (require.main === module) Bundle.main();
+```
+
 ## Layout
 
 ```text
 package.json          # @showtrak/protocol (not published to npm)
 tsconfig.json         # standalone type-check config
+tsconfig.build.json   # emits the compiled entry points to dist/ (what the apps run)
+tsconfig.common.json  # checks src/common against the language alone
 src/
   index.d.ts          # @showtrak/protocol: the wire, plus ShowTrak Server's contracts
   common.d.ts         # shared primitives (MacAddressMap, etc.)
@@ -119,8 +190,13 @@ src/
   preload.d.ts        # ShowTrak Server's Electron preload bridges
   client/             # @showtrak/protocol/client: ShowTrak Client's preloads, profile
   timers/             # @showtrak/protocol/timers: ShowTrak Timers' IPC, views, Web Dashboard
-  runtime/            # @showtrak/protocol/runtime: the runtime code the apps share
+  runtime/            # @showtrak/protocol/runtime: Node code the apps share
+  common/             # @showtrak/protocol/common: isomorphic code the apps share
+  electron/           # @showtrak/protocol/electron: Electron main-process code the apps share
+scripts/              # build, dev, test and release scripts the apps call
+spec/                 # tests of the shared code, run by npm test
 type-tests/           # compile-time assertions about src/, run by npm run typecheck
+tooling/              # this repo's own lint, format and TypeScript tooling
 e2e/                  # end-to-end checks with real built apps (see e2e/README.md)
 ```
 
@@ -131,7 +207,7 @@ renderer), its view models, what it persists for later releases to read, and
 any socket it serves. Types that describe an app's internal module wiring,
 used inside one process of one app, stay in that app.
 
-Everything outside `src/runtime` is types only. Where a contract has a runtime
+Everything else under `src/` is types only. Where a contract has a runtime
 half, such as an app's channel allowlist, the values stay in the app and are
 checked against the types here. `ChannelListCheck` proves a list names exactly
 the declared channels, both ways:
@@ -159,14 +235,19 @@ that would let an app drop its compatibility handling.
 `type-tests/helpers.ts`). Add one when a change has a shape worth pinning down.
 Keep test files out of node --test's patterns (`*.test.*`, `test-*`, a `test/`
 folder): ShowTrak Client runs `node --test` from its root, where this repo is
-`shared/`.
+`shared/`. The specs are `spec/**/*.spec.js` for that reason.
+
+Shared code needs a spec for each app's configuration of it, as it would have
+had in the app: `spec/` holds the apps' own tests of everything that moved
+here, run against `dist/` with Electron stubbed (`spec/helpers/`).
 
 ```sh
 npm run setup         # once: installs the tooling in tooling/
 npm run lint          # ESLint, with ShowTrak Server's rules
 npm run format        # Prettier (format:check to only check)
 npm run typecheck     # tsc --noEmit, plus the type tests
-npm run build         # compiles src/runtime to dist/runtime
+npm run build         # compiles src/runtime, src/common and src/electron to dist/
+npm test              # builds, then runs spec/**/*.spec.js
 ```
 
 CI runs all of these on every push. The tooling has its own `package.json` in
