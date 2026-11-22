@@ -1229,9 +1229,26 @@ export interface FreeKioskMetricGroupView {
   Note?: string;
 }
 
+/**
+ * One field of the generated alarm settings schema: a settings field tagged
+ * with what it belongs to, so the editor can bucket fields by section and tie
+ * each back to its metric without re-parsing the key.
+ */
+export interface FreeKioskAlarmField extends MonitoringSettingField {
+  /** The metric this field arms; absent on a section's monitoring switch. */
+  MetricKey?: string;
+  /**
+   * The section the field sits in: a metric section, or 'Setup' for the
+   * terminal's configuration (its display mode) rather than its monitoring.
+   */
+  MetricSection?: FreeKioskMetricSection | 'Setup';
+  /** Set only on a section's monitoring switch (`G_<Key>_On`): the section it turns on and off. */
+  MetricGroup?: FreeKioskMetricSection;
+}
+
 export interface FreeKioskMetricCatalog {
   Metrics: FreeKioskMetricView[];
-  AlarmFields: MonitoringSettingField[];
+  AlarmFields: FreeKioskAlarmField[];
   Sections: FreeKioskMetricSection[];
   Groups: FreeKioskMetricGroupView[];
 }
