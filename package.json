@@ -2,12 +2,28 @@
   "name": "@showtrak/protocol",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared ShowTrak wire-protocol type definitions plus the small amount of runtime infrastructure both apps execute (client <-> server <-> SDK). Consumed as a git submodule at shared/.",
+  "description": "Shared ShowTrak type definitions: the wire protocol between ShowTrak apps (client <-> server <-> SDK), every app's process-boundary contracts, and the small amount of runtime infrastructure the apps execute. Consumed as a git submodule at shared/.",
   "license": "AGPL-3.0-only",
   "types": "src/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "client": [
+        "src/client/index.d.ts"
+      ],
+      "timers": [
+        "src/timers/index.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "types": "./src/index.d.ts"
+    },
+    "./client": {
+      "types": "./src/client/index.d.ts"
+    },
+    "./timers": {
+      "types": "./src/timers/index.d.ts"
     },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
