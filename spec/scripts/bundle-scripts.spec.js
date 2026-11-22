@@ -1,7 +1,8 @@
 // The esbuild option builders: scripts/build-main.js (the main-process bundle)
 // and scripts/build-renderer.js (each browser-side bundle), with ShowTrak
-// Server's and ShowTrak Timers' configurations. Only the options are built
-// here: nothing is bundled, so esbuild is not needed.
+// Server's and ShowTrak Timers' configurations (and ShowTrak Client's, which
+// uses only the renderer bundles). Only the options are built here: nothing is
+// bundled, so esbuild is not needed.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -119,6 +120,36 @@ test('ShowTrak Server’s service worker opts out of minify and keepNames', (t) 
   assert.equal(Options.minify, false);
   assert.equal(Options.keepNames, false);
   assert.equal(Options.define, undefined);
+});
+
+test('ShowTrak Client’s windows are bundled exactly as its own script built them', (t) => {
+  // The Client's scripts/build-renderer.js passed these options to esbuild
+  // itself, without keepNames. Its bundles must come out byte for byte the same
+  // through this one, so its configuration turns keepNames off and nothing else
+  // may differ.
+  const root = makeRoot(t, '3.30.0');
+  const Options = Renderer.rendererBundleOptions(
+    {
+      name: 'Identify overlay',
+      entry: '/client/src/UI/js/app/identify-overlay.ts',
+      outfile: '/client/dist/UI/js/app/identify-overlay.js',
+      keepNames: false,
+    },
+    { root }
+  );
+  assert.deepEqual(Options, {
+    entryPoints: ['/client/src/UI/js/app/identify-overlay.ts'],
+    outfile: '/client/dist/UI/js/app/identify-overlay.js',
+    bundle: true,
+    format: 'iife',
+    target: 'es2022',
+    platform: 'browser',
+    minify: true,
+    keepNames: false,
+    sourcemap: true,
+    legalComments: 'none',
+    logLevel: 'info',
+  });
 });
 
 test('ShowTrak Timers’ service worker is stamped with the app version', (t) => {
