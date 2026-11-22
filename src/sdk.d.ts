@@ -201,9 +201,13 @@ export interface SdkClientToServerEvents {
 
 // ---- Pushes -----------------------------------------------------------------
 
-/** A device waiting to be adopted (`SetDevicesPendingAdoption`). */
+/**
+ * A device waiting to be adopted (`SetDevicesPendingAdoption`, to the renderer,
+ * the Web UI and `/sdk`).
+ */
 export interface PendingAdoptionView {
-  State: 'Pending';
+  /** 'Adopting' once an adoption has been asked for, until the device is adopted. */
+  State: 'Pending' | 'Adopting';
   UUID: string;
   /** 'No Hostname Found' when the client sent none. */
   Hostname: string;

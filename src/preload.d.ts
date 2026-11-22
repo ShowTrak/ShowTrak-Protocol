@@ -23,6 +23,7 @@ import type {
 } from './app';
 import type { ExecutionOutputView } from './execution';
 import type { ScriptCatalogEntry, ScriptWhitelistScope } from './scripts';
+import type { PendingAdoptionView } from './sdk';
 import type { AudioLevelRequest, USBDevice } from './telemetry';
 import type { ClientVariableView, VariableView } from './variables';
 import type {
@@ -412,7 +413,7 @@ export interface ShowTrakAPI {
   SetOSCList(callback: (list: OSCRoute[]) => void): Unsubscribe;
 
   // ---- Client list / telemetry subscriptions ----------------------------
-  SetDevicesPendingAdoption(callback: (devices: ClientView[]) => void): Unsubscribe;
+  SetDevicesPendingAdoption(callback: (devices: PendingAdoptionView[]) => void): Unsubscribe;
   SetFullClientList(callback: (Clients: ClientView[], Groups: GroupView[]) => void): Unsubscribe;
   SetScriptList(callback: (scripts: ScriptCatalogEntry[]) => void): Unsubscribe;
   ClientUpdated(callback: (client: ClientView) => void): Unsubscribe;
