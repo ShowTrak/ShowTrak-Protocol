@@ -26,7 +26,7 @@ export type _GetScriptsAck = Expect<Equal<GetScriptsAck, ScriptCatalogWireEntry[
 
 type ResponseResult = Parameters<ClientToServerEvents['ScriptExecutionResponse']>[2];
 export type _ResponseResult = Expect<Equal<ResponseResult, ScriptExecutionResult | undefined>>;
-export type _ResultValues = Expect<Equal<ScriptExecutionResult, true | null>>;
+export type _ResultValues = Expect<Equal<ScriptExecutionResult, boolean | null>>;
 
 // ---- Narrowing on isValid -----------------------------------------------------
 
