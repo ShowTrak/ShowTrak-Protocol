@@ -150,6 +150,12 @@ Renderer configs map `@showtrak/protocol/common` the same way, and
 imports resolve by package name through `exports` (the `file:./shared`
 dependency), and esbuild bundles the compiled files from `shared/dist`.
 
+esbuild cannot tree-shake that CommonJS, so a bundle gets every module of an
+entry point it imports. A page served to browsers can take one module of the
+common entry point instead, `@showtrak/protocol/common/<module>` (ShowTrak
+Timers' Web Dashboard imports `@showtrak/protocol/common/guards`), mapped with
+`"@showtrak/protocol/common/*": ["./shared/dist/common/*"]`.
+
 The scripts are plain CommonJS that needs nothing built (`copy-bootstrap-icons`
 runs on postinstall). An app keeps its own `scripts/<name>.js`, which calls the
 shared one with the app's configuration; the header of each shared script shows

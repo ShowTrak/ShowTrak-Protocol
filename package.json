@@ -19,6 +19,9 @@
       "common": [
         "dist/common/index.d.ts"
       ],
+      "common/*": [
+        "dist/common/*.d.ts"
+      ],
       "electron-main": [
         "dist/electron-main/index.d.ts"
       ],
@@ -44,6 +47,10 @@
     "./common": {
       "types": "./dist/common/index.d.ts",
       "default": "./dist/common/index.js"
+    },
+    "./common/*": {
+      "types": "./dist/common/*.d.ts",
+      "default": "./dist/common/*.js"
     },
     "./electron-main": {
       "types": "./dist/electron-main/index.d.ts",

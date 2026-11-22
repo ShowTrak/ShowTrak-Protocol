@@ -124,6 +124,32 @@ test('the electron-main entry point loads without touching Electron', (t) => {
   }
 });
 
+test('each module of the common entry point loads on its own, by package name', () => {
+  // A page served to browsers (ShowTrak Timers' Web Dashboard) imports just the
+  // module it uses: esbuild cannot tree-shake this CommonJS, so the entry point
+  // would bring every module into the bundle. A module requires nothing, so it
+  // comes alone.
+  const Dir = path.join(ROOT, 'dist', 'common');
+  const Modules = fs
+    .readdirSync(Dir)
+    .filter((Name) => Name.endsWith('.js') && Name !== 'index.js')
+    .map((Name) => Name.slice(0, -'.js'.length));
+  assert.ok(Modules.includes('guards'), Modules.join(', '));
+  for (const Name of Modules) {
+    assert.equal(
+      require.resolve(`@showtrak/protocol/common/${Name}`),
+      path.join(Dir, `${Name}.js`)
+    );
+    assert.ok(fs.existsSync(path.join(Dir, `${Name}.d.ts`)), `${Name}.d.ts`);
+    assert.doesNotMatch(fs.readFileSync(path.join(Dir, `${Name}.js`), 'utf8'), /require\(/, Name);
+  }
+  // The same functions the entry point exports, not copies.
+  assert.equal(
+    require('@showtrak/protocol/common/guards').IsArray,
+    require('@showtrak/protocol/common').IsArray
+  );
+});
+
 test('the common entry point loads nothing but itself', () => {
   // It is bundled into renderers, so it may not require anything: not Node's
   // built-ins, not another entry point.
