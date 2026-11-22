@@ -42,6 +42,21 @@ export interface DefaultLevelInputs {
 }
 
 /**
+ * What an app's Logger `configure()` accepts at runtime (from the LOG_LEVEL
+ * setting and friends). Types only: each app's sink applies them itself, and an
+ * app whose sink cannot honour an option narrows this (ShowTrak Client takes
+ * `level` alone: `Pick<LoggerConfigureOptions, 'level'>`).
+ */
+export interface LoggerConfigureOptions {
+  /** One of LEVEL_RANK's keys; an unknown level falls back as IsLevelEnabled describes. */
+  level?: string;
+  /** Write to the console. */
+  toConsole?: boolean;
+  /** Write to the daily log file. */
+  toFile?: boolean;
+}
+
+/**
  * The level to use when LOG_LEVEL is not set.
  *
  * Packaged builds and NODE_ENV=production both mean "shipped": log at 'info', so
