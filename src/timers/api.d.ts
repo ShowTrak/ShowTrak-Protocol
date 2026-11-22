@@ -86,6 +86,26 @@ export interface ShowFileStateView {
   Generation: number;
 }
 
+/**
+ * An upgrade the operator accepted (Show:ResolveUpgrade): the original was
+ * copied to BackupPath, then the file was upgraded (or, when it is the show
+ * already open, is upgraded by its next save).
+ */
+export interface ShowFileUpgradeAcceptedView {
+  FilePath: string;
+  BackupPath: string;
+}
+
+/**
+ * An upgrade the operator declined (Show:ResolveUpgrade). The file is left
+ * untouched. Cleared: the working show was cleared, as it is when the declined
+ * file was the show left open last session (the renderer then starts a new
+ * show file); otherwise the show already open stays open.
+ */
+export interface ShowFileUpgradeDeclinedView {
+  Cleared: boolean;
+}
+
 /** Where one timer sits after a drag: its group (null for the Default group). */
 export interface TimerPlacementView {
   ID: number;
@@ -108,7 +128,7 @@ export interface LibrarySoundView {
   Label: string;
   OriginalName: string;
   Extension: string;
-  /** 0-100. */
+  /** A percentage, 0-200 (the Sound Library's slider sets up to 100). */
   Volume: number;
   /** Bytes. */
   Size: number;
@@ -200,7 +220,10 @@ export interface InvokeMap {
   'Show:Save': { Args: []; Result: ResultTuple<string> };
   'Show:SaveAs': { Args: []; Result: ResultTuple<string> };
   'Show:CheckUpgrade': { Args: []; Result: ResultTuple<ShowFileUpgrade | null> };
-  'Show:ResolveUpgrade': { Args: [Accept: boolean]; Result: ResultTuple<unknown> };
+  'Show:ResolveUpgrade': {
+    Args: [Accept: boolean];
+    Result: ResultTuple<ShowFileUpgradeAcceptedView | ShowFileUpgradeDeclinedView>;
+  };
   'Show:HasUnsavedData': { Args: []; Result: boolean };
   'Show:EnsureFileExists': {
     Args: [];
@@ -227,7 +250,10 @@ export interface InvokeMap {
   'App:GetLicense': { Args: []; Result: ResultTuple<{ license: string }> };
   'AppUpdate:Check': { Args: []; Result: void };
   'AppUpdate:Install': { Args: []; Result: void };
-  /** Confirmed skips the unsaved-changes prompt. */
+  /**
+   * Confirmed: the renderer has already asked the operator to confirm the quit
+   * (Stop Accidental Shutdowns), so the main process quits without asking again.
+   */
   Shutdown: { Args: [Confirmed?: boolean]; Result: void };
 }
 
@@ -302,7 +328,9 @@ export interface TimersAPI {
   SaveShow(): Promise<ResultTuple<string>>;
   SaveShowAs(): Promise<ResultTuple<string>>;
   CheckShowFileUpgrade(): Promise<ResultTuple<ShowFileUpgrade | null>>;
-  ResolveShowFileUpgrade(Accept: boolean): Promise<ResultTuple<unknown>>;
+  ResolveShowFileUpgrade(
+    Accept: boolean
+  ): Promise<ResultTuple<ShowFileUpgradeAcceptedView | ShowFileUpgradeDeclinedView>>;
   HasUnsavedShowData(): Promise<boolean>;
   EnsureShowFileExists(): Promise<ResultTuple<{ Missing: boolean; FilePath?: string }>>;
   OnShowFile(Callback: (State: ShowFileStateView) => void): Unsubscribe;

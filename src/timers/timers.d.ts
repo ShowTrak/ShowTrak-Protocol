@@ -30,7 +30,10 @@ export interface TimerConfig {
   Type: TimerType;
   Name: string;
   Description: string;
-  /** Milliseconds; null for stopwatches and World Clocks. */
+  /**
+   * Milliseconds; null for stopwatches and World Clocks, and for a Timer given
+   * no duration (it then counts up with no end, as in 1.x).
+   */
   Duration: number | null;
   Weight: number;
   ShowOnWeb: boolean;
