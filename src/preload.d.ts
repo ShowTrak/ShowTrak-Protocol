@@ -40,6 +40,7 @@ import type {
   AuditLogQuery,
   ClientApplicationHistorySeries,
   ClientAudioHistorySeries,
+  ClientPatch,
   ClientNetworkHistorySeries,
   ClientStorageHistorySeries,
   ClientDisplayHistorySeries,
@@ -417,6 +418,8 @@ export interface ShowTrakAPI {
   SetFullClientList(callback: (Clients: ClientView[], Groups: GroupView[]) => void): Unsubscribe;
   SetScriptList(callback: (scripts: ScriptCatalogEntry[]) => void): Unsubscribe;
   ClientUpdated(callback: (client: ClientView) => void): Unsubscribe;
+  /** Batched client changes, at most one patch per client per flush (see ClientPatch). */
+  ClientPatches(callback: (patches: ClientPatch[]) => void): Unsubscribe;
   UpdateScriptExecutions(callback: (executions: ScriptExecutionView[]) => void): Unsubscribe;
   ShutdownRequested(callback: () => void): Unsubscribe;
   USBDeviceAdded(callback: (Client: ClientView, Device: USBDevice) => void): Unsubscribe;

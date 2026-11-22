@@ -676,6 +676,21 @@ export interface ClientView {
   CriticalStorageVolumes?: CriticalStorageVolume[];
 }
 
+/**
+ * What changed on one client since a surface's last push (`ClientPatches`, to
+ * the desktop renderer and the Web UI only; `/sdk` sessions are sent the whole
+ * ClientView as `ClientUpdated` instead). Every top-level ClientView field whose
+ * value changed, as it now is, and in `$Removed` the names of any the client no
+ * longer has. The renderer applies it to the ClientView it already holds.
+ *
+ * Both receivers ship with the Server, so this message changes shape with it.
+ */
+export interface ClientPatch {
+  UUID: string;
+  $Removed?: string[];
+  [Field: string]: unknown;
+}
+
 /** Renderer-facing group. */
 export interface GroupView {
   GroupID: number;
