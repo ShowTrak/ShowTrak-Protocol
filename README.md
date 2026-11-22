@@ -22,6 +22,12 @@ shapes exchanged over Socket.IO between:
 - **[ShowTrak Client](https://github.com/ShowTrak/ShowTrakClient)** (endpoint agent)
 - **ShowTrak SDKs** (e.g. the Android integration SDK)
 
+It also holds every other contract that crosses a process or network boundary
+in a ShowTrak desktop app (Server, Client and
+**[ShowTrak Timers](https://github.com/ShowTrak/ShowTrakTimers)**): each app's
+Electron preload bridge and IPC channels, its view models, its persisted
+formats, and the Timers Web Dashboard's socket.
+
 ## Why this repo exists
 
 These types are authored as ambient TypeScript declaration files (`.d.ts`) with
@@ -60,6 +66,22 @@ Import with **type-only** syntax:
 import type { HeartbeatPayload, Vitals } from '@showtrak/protocol';
 ```
 
+There are three type entry points, one per app surface. The root holds the
+wire every app shares plus ShowTrak Server's own contracts; ShowTrak Client and
+ShowTrak Timers each have their own, because their names overlap the Server's
+(each app has its own `GroupView`, `SettingView`, `window.API` and so on):
+
+```ts
+import type { ShowTrakAPI, ClientToServerEvents } from '@showtrak/protocol';
+import type { ClientPreloadAPI, ClientProfile } from '@showtrak/protocol/client';
+import type { TimersAPI, TimerView } from '@showtrak/protocol/timers';
+```
+
+The `paths` mapping above resolves all three under both `node16` and `bundler`
+module resolution. A config without the mapping resolves them from
+`node_modules/@showtrak/protocol` (the `file:./shared` dependency) through the
+`exports` map, or `typesVersions` under `node10`.
+
 ### CI
 
 Every `actions/checkout` in a consuming repo must fetch submodules, or the path
@@ -77,25 +99,47 @@ Clone consumers with `git clone --recursive`, or run
 ## Layout
 
 ```text
-package.json          # @showtrak/protocol (types-only, not published to npm)
+package.json          # @showtrak/protocol (not published to npm)
 tsconfig.json         # standalone type-check config
 src/
-  index.d.ts          # barrel re-export
+  index.d.ts          # @showtrak/protocol: the wire, plus ShowTrak Server's contracts
   common.d.ts         # shared primitives (MacAddressMap, etc.)
   vitals.d.ts         # CPU / RAM / uptime telemetry
   telemetry.d.ts      # heartbeat, system info, USB, displays, network, apps
   adoption.d.ts       # adoption handshake + lifecycle
   integrated.d.ts     # integrated-client actions / state (SDK surface)
   execution.d.ts      # script / event / launch-config execution contracts
+  scripts.d.ts        # the script catalog, as every supported Server sends it
+  variables.d.ts      # show variables
   events.d.ts         # Socket.IO client<->server event maps
-  views.d.ts          # server view models (server + Web UI)
-  preload.d.ts        # ShowTrak Server's Electron preload bridge contract
+  app.d.ts            # plumbing every desktop app shares (IPC results, updates, settings)
+  views.d.ts          # ShowTrak Server's view models (renderer + Web UI)
+  preload.d.ts        # ShowTrak Server's Electron preload bridges
+  client/             # @showtrak/protocol/client: ShowTrak Client's preloads, profile
+  timers/             # @showtrak/protocol/timers: ShowTrak Timers' IPC, views, Web Dashboard
+  runtime/            # @showtrak/protocol/runtime: the runtime code the apps share
+type-tests/           # compile-time assertions about src/, run by npm run typecheck
 e2e/                  # end-to-end checks with real built apps (see e2e/README.md)
 ```
 
-`views.d.ts` and `preload.d.ts` describe **server-internal** surfaces rather than
-the client wire. They live here because the Server's Web UI and renderer both
-consume them; the Client has its own, separate preload contract in its own repo.
+The rule for what lives here: **every contract that crosses a process or
+network boundary, for any ShowTrak app, lives here**. That covers the wire
+between apps, each app's preload bridge and IPC channels (main process to
+renderer), its view models, what it persists for later releases to read, and
+any socket it serves. Types that describe an app's internal module wiring,
+used inside one process of one app, stay in that app.
+
+Everything outside `src/runtime` is types only. Where a contract has a runtime
+half, such as an app's channel allowlist, the values stay in the app and are
+checked against the types here. `ChannelListCheck` proves a list names exactly
+the declared channels, both ways:
+
+```ts
+import type { AssertTrue, ChannelListCheck, InvokeChannel } from '@showtrak/protocol/timers';
+
+export const INVOKE_CHANNELS = ['Config:Get', 'Loaded' /* ... */] as const;
+type _InvokeChannelsMatch = AssertTrue<ChannelListCheck<InvokeChannel, typeof INVOKE_CHANNELS>>;
+```
 
 ## Making changes
 
@@ -103,11 +147,23 @@ The event maps in `events.d.ts` are the contract. When adding an event, add it t
 the map **and** implement it on both sides in the same change; a listener with no
 emitter (or vice versa) is exactly the drift this repo exists to prevent.
 
+Describe the wire as it really is, including what older releases send. A new
+Server must keep working with older Clients and SDKs, and a new Client is still
+adopted by older Servers, so a field an older release omits is optional and says
+which release added it (see `ScriptCatalogWireEntry`). Never tidy a type in a way
+that would let an app drop its compatibility handling.
+
+`type-tests/` holds compile-time assertions about these types (helpers in
+`type-tests/helpers.ts`). Add one when a change has a shape worth pinning down.
+Keep test files out of node --test's patterns (`*.test.*`, `test-*`, a `test/`
+folder): ShowTrak Client runs `node --test` from its root, where this repo is
+`shared/`.
+
 ```sh
 npm run setup         # once: installs the tooling in tooling/
 npm run lint          # ESLint, with ShowTrak Server's rules
 npm run format        # Prettier (format:check to only check)
-npm run typecheck     # tsc --noEmit
+npm run typecheck     # tsc --noEmit, plus the type tests
 npm run build         # compiles src/runtime to dist/runtime
 ```
 
