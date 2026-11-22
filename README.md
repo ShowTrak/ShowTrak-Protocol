@@ -146,14 +146,25 @@ sources into the app's program, outside its `rootDir`):
 ```
 
 Renderer configs map `@showtrak/protocol/common` the same way, and
-`@showtrak/protocol/ui/*` as the renderer kit shows below. At runtime the
-imports resolve by package name through `exports` (the `file:./shared`
-dependency), and esbuild bundles the compiled files from `shared/dist`.
+`@showtrak/protocol/ui/*` as the renderer kit shows below. In Node (main
+processes and tests) the imports resolve by package name through `exports` (the
+`file:./shared` dependency), to the compiled files in `shared/dist`.
 
-esbuild cannot tree-shake that CommonJS, so a bundle gets every module of an
-entry point it imports. A page served to browsers can take one module of the
-common entry point instead, `@showtrak/protocol/common/<module>` (ShowTrak
-Timers' Web Dashboard imports `@showtrak/protocol/common/guards`), mapped with
+esbuild resolves through the app's root `tsconfig.json`, and does two different
+things:
+
+- An entry point's own name (`runtime`, `common`, `electron-main`) matches an
+  exact key that points at declarations, so esbuild falls back to `exports` and
+  bundles the compiled CommonJS from `shared/dist`. It cannot tree-shake that,
+  so a bundle gets every module of the entry point.
+- A module path (`ui/<module>`, `common/<module>`) matches the
+  `@showtrak/protocol/*` wildcard, so esbuild bundles that module's TypeScript
+  source from `shared/src`, and only what is imported.
+
+Typechecking reads the declarations in `shared/dist`, built from the same
+sources by `build:shared`, which every app build runs first. A page served to
+browsers should import single modules: ShowTrak Timers' Web Dashboard imports
+`@showtrak/protocol/common/guards`, mapped for typechecking with
 `"@showtrak/protocol/common/*": ["./shared/dist/common/*"]`.
 
 The scripts are plain CommonJS that needs nothing built (`copy-bootstrap-icons`
