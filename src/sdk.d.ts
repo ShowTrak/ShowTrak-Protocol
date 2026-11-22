@@ -201,9 +201,13 @@ export interface SdkClientToServerEvents {
 
 // ---- Pushes -----------------------------------------------------------------
 
-/** A device waiting to be adopted (`SetDevicesPendingAdoption`). */
+/**
+ * A device waiting to be adopted (`SetDevicesPendingAdoption`, to the renderer,
+ * the Web UI and `/sdk`).
+ */
 export interface PendingAdoptionView {
-  State: 'Pending';
+  /** 'Adopting' once an adoption has been asked for, until the device is adopted. */
+  State: 'Pending' | 'Adopting';
   UUID: string;
   /** 'No Hostname Found' when the client sent none. */
   Hostname: string;
@@ -224,6 +228,12 @@ export interface PendingAdoptionView {
 export interface SdkServerToClientEvents {
   /** First thing after a successful pairing; see SdkPairedPayload. */
   paired: (payload: SdkPairedPayload) => void;
+  /**
+   * The device was revoked at the desk: sent to each of its live sessions just
+   * before the server disconnects them. Its token is dead, so forget it and pair
+   * again rather than reconnecting into 'Device revoked'. Server 3.19+.
+   */
+  revoked: () => void;
   SetFullClientList: (clients: ClientView[], groups: GroupView[]) => void;
   ClientUpdated: (client: ClientView) => void;
   SetFullMonitoringTargetList: (monitors: ClientView[]) => void;
@@ -280,10 +290,10 @@ export type SdkDeviceOnlyPushChannel =
 
 /**
  * The renderer channels forwarded to SDK sessions (the Server's
- * SDK_PUSH_ALLOWLIST): every push above except the per-session 'paired' and
- * 'MonitorLiveLevels:Frames'.
+ * SDK_PUSH_ALLOWLIST): every push above except the per-session 'paired',
+ * 'revoked' and 'MonitorLiveLevels:Frames'.
  */
 export type SdkPushChannel = Exclude<
   keyof SdkServerToClientEvents,
-  'paired' | 'MonitorLiveLevels:Frames'
+  'paired' | 'revoked' | 'MonitorLiveLevels:Frames'
 >;

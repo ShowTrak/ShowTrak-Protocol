@@ -2,6 +2,7 @@
 
 import type {
   AppMode,
+  PendingAdoptionView,
   SdkClientToServerEvents,
   SdkCommandArgs,
   SdkCommandEmitArgs,
@@ -10,6 +11,7 @@ import type {
   SdkDeviceOnlyPushChannel,
   SdkPushChannel,
   SdkServerToClientEvents,
+  ShowTrakAPI,
 } from '@showtrak/protocol';
 import type { Equal, Expect, Extends } from './helpers';
 
@@ -30,12 +32,22 @@ export type _CommandEvent = Expect<
   Equal<Parameters<SdkClientToServerEvents['command']>, SdkCommandEmitArgs>
 >;
 
-// The forwarded channels are the push map minus the two per-session events,
-// and the device-only ones are among them.
+// The forwarded channels are the push map minus the per-session events, and
+// the device-only ones are among them.
 export type _DeviceOnlyForwarded = Expect<Extends<SdkDeviceOnlyPushChannel, SdkPushChannel>>;
 export type _PerSession = Expect<
   Equal<
     Exclude<keyof SdkServerToClientEvents, SdkPushChannel>,
-    'paired' | 'MonitorLiveLevels:Frames'
+    'paired' | 'revoked' | 'MonitorLiveLevels:Frames'
+  >
+>;
+
+// A pending device reads 'Adopting' once adoption is asked for, and the renderer
+// is pushed the same list the SDK is.
+export type _PendingState = Expect<Equal<PendingAdoptionView['State'], 'Pending' | 'Adopting'>>;
+export type _PendingPush = Expect<
+  Equal<
+    Parameters<Parameters<ShowTrakAPI['SetDevicesPendingAdoption']>[0]>[0],
+    Parameters<SdkServerToClientEvents['SetDevicesPendingAdoption']>[0]
   >
 >;
