@@ -34,7 +34,7 @@
     "setup": "npm ci --prefix tooling",
     "build": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.json --typeRoots ./tooling/node_modules/@types",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "typecheck": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit && node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.json --noEmit --typeRoots ./tooling/node_modules/@types",
+    "typecheck": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit && node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.json --noEmit --typeRoots ./tooling/node_modules/@types && node tooling/node_modules/typescript/bin/tsc -p type-tests/tsconfig.json && node tooling/node_modules/typescript/bin/tsc -p type-tests/tsconfig.exports.json",
     "lint": "node tooling/node_modules/eslint/bin/eslint.js -c tooling/lint.config.mjs .",
     "format": "node tooling/node_modules/prettier/bin/prettier.cjs \"**/*.{js,mjs,cjs,ts,md,json,yml}\" --write",
     "format:check": "node tooling/node_modules/prettier/bin/prettier.cjs \"**/*.{js,mjs,cjs,ts,md,json,yml}\" --check"

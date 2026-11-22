@@ -1,0 +1,11 @@
+{
+  // entry-points.ts again, as a renderer with no `paths` mapping resolves the
+  // package: bundler resolution through package.json `exports`.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "paths": {}
+  },
+  "include": ["./entry-points.ts", "./helpers.ts"]
+}

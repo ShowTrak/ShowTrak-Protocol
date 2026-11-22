@@ -1,0 +1,16 @@
+{
+  // The type tests: compile-time assertions about src/ (see helpers.ts). Run by
+  // `npm run typecheck`, never emitted.
+  //
+  // `paths` maps the package name exactly as ShowTrak Server, Client and Timers
+  // map it, so the tests import what an app imports, the way it imports it.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "@showtrak/protocol": ["../src/index.d.ts"],
+      "@showtrak/protocol/*": ["../src/*"]
+    }
+  },
+  "include": ["./*.ts", "../src/**/*.d.ts"]
+}
