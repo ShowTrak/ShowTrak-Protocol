@@ -18,5 +18,8 @@
     "noEmit": true,
     "types": []
   },
-  "include": ["src/**/*.d.ts"]
+  "include": ["src/**/*.d.ts"],
+  // src/ui is browser code with its own build (tsconfig.build.ui.json), checked
+  // there against the DOM library and jQuery's types.
+  "exclude": ["src/ui/**"]
 }

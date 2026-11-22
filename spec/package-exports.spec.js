@@ -15,15 +15,53 @@ const Package = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf
 
 const COMPILED = ['runtime', 'common', 'electron-main'];
 
+/**
+ * Whether a target names files the build wrote. A literal target is one file;
+ * a subpath pattern (`./dist/ui/*.js`) must match at least one file in its
+ * folder, as Node and TypeScript expand the `*`.
+ */
+function TargetExists(Target) {
+  if (!Target.includes('*')) return fs.existsSync(path.join(ROOT, Target));
+  const [Before, After] = Target.split('*');
+  const Slash = Before.lastIndexOf('/');
+  const Dir = path.join(ROOT, Before.slice(0, Slash));
+  const Prefix = Before.slice(Slash + 1);
+  return (
+    fs.existsSync(Dir) &&
+    fs
+      .readdirSync(Dir)
+      .some(
+        (Name) =>
+          Name.startsWith(Prefix) &&
+          Name.endsWith(After) &&
+          Name.length > Prefix.length + After.length
+      )
+  );
+}
+
 test('every export and typesVersions target exists', () => {
   for (const [Entry, Targets] of Object.entries(Package.exports)) {
     for (const Target of Object.values(Targets)) {
-      assert.ok(fs.existsSync(path.join(ROOT, Target)), `${Entry} -> ${Target}`);
+      assert.ok(TargetExists(Target), `${Entry} -> ${Target}`);
     }
   }
   for (const [Entry, [Target]] of Object.entries(Package.typesVersions['*'])) {
-    assert.ok(fs.existsSync(path.join(ROOT, Target)), `typesVersions ${Entry} -> ${Target}`);
+    assert.ok(TargetExists(Target), `typesVersions ${Entry} -> ${Target}`);
   }
+});
+
+test('a pattern target is checked against its folder, not as a literal file', () => {
+  assert.equal(TargetExists('./dist/common/*.js'), true);
+  assert.equal(TargetExists('./dist/common/*.nothing'), false);
+  assert.equal(TargetExists('./dist/no-such-folder/*.js'), false);
+});
+
+test('every entry point is in both exports and typesVersions', () => {
+  const FromExports = Object.keys(Package.exports)
+    .filter((Key) => Key !== '.')
+    .map((Key) => Key.slice(2))
+    .sort();
+  assert.deepEqual(Object.keys(Package.typesVersions['*']).sort(), FromExports);
 });
 
 test('each compiled entry point has JavaScript and declarations, both ways of asking', () => {

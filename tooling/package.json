@@ -6,6 +6,7 @@
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/jquery": "^4.0.1",
     "@types/node": "^26.6.6",
     "electron": "^45.4.1",
     "electron-updater": "^6.8.11",

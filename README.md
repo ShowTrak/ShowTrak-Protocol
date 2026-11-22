@@ -101,16 +101,19 @@ Clone consumers with `git clone --recursive`, or run
 
 Besides the contracts, the desktop apps share code that each used to carry its
 own copy of, where a fix to one had to be ported to the others by hand. It is
-compiled JavaScript, in three entry points that `tsconfig.build.json` builds into
-`dist/` (each app runs it as `npm run build:shared`, with its own TypeScript),
-plus plain-JavaScript build scripts:
+compiled JavaScript, built into `dist/` by `tsconfig.build.json` (runtime,
+common, electron-main) and `tsconfig.build.ui.json` (the renderer kit), which
+the apps run in `npm run build:shared` with their own TypeScript, plus
+plain-JavaScript build scripts. Each entry point is held to what its
+environment provides:
 
-| Import                             | Source              | What it is                                                                                                                                                                                    | Runs in                   |
-| ---------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `@showtrak/protocol/runtime`       | `src/runtime`       | Node infrastructure: network-error classification, checksums, the update-channel rule, the logging primitives and the Server and Timers logger, the process guards, durable file writes       | main processes            |
-| `@showtrak/protocol/common`        | `src/common`        | Isomorphic helpers: type guards, the loose version order, script argument parsing. Nothing but the language: no Node, DOM or Electron (`tsconfig.common.json` enforces it)                    | main processes, renderers |
-| `@showtrak/protocol/electron-main` | `src/electron-main` | Electron main-process helpers: the self-updater and its Squirrel helpers, show file associations, window guards and zoom shortcuts, the first-paint signal, dev reload, the renderer push bus | main processes            |
-| `shared/scripts/*.js`              | `scripts`           | Build, dev, test and release tooling: the main and renderer bundles, assets, CSS, `npm start`, `npm test`, `npm run publish`, the Electron locale trim                                        | Node, when building       |
+| Import                             | Source              | What it is                                                                                                                                                                                    | May use                                                                                     |
+| ---------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `@showtrak/protocol/runtime`       | `src/runtime`       | Node infrastructure: network-error classification, checksums, the update-channel rule, the logging primitives and the Server and Timers logger, the process guards, durable file writes       | Node. No Electron, no DOM. Main processes of all three apps                                 |
+| `@showtrak/protocol/common`        | `src/common`        | Isomorphic helpers: type guards, the loose version order, script argument parsing                                                                                                             | The language alone: no Node, DOM or Electron (`tsconfig.common.json`). Anywhere             |
+| `@showtrak/protocol/electron-main` | `src/electron-main` | Electron main-process helpers: the self-updater and its Squirrel helpers, show file associations, window guards and zoom shortcuts, the first-paint signal, dev reload, the renderer push bus | Node and Electron (electron-updater lazily). Main processes                                 |
+| `@showtrak/protocol/ui/<module>`   | `src/ui`            | The renderer kit, below: the Software Update modal, dialogs, toasts, Markdown, QR codes, menus                                                                                                | The DOM, and jQuery, Bootstrap and Howler as page globals. Server and Timers renderers only |
+| `shared/scripts/*.js`              | `scripts`           | Build, dev, test and release tooling: the main and renderer bundles, assets, CSS, `npm start`, `npm test`, `npm run publish`, the Electron locale trim                                        | Node, and the app's own build tools (esbuild, Electron, TypeScript). At build time          |
 
 What holds for all of it:
 
@@ -118,12 +121,13 @@ What holds for all of it:
   show file extension, logs folder, logger, window) is always passed in, so an
   app's own module is a few lines of configuration around the shared one.
 - **Loading is free.** The Electron modules touch Electron only when called,
-  never while loading, so the apps' test suites can load them with `electron`
-  stubbed; heavy dependencies are required lazily (electron-updater, on a
-  packaged build's first update check).
-- **Bare imports come from the app.** `electron`, `electron-updater` and
-  `@types/node` resolve from the app's own `node_modules`, which sits above
-  `shared/`. Working on this repo on its own, they come from `tooling/`
+  and the renderer kit the page only when called, never while loading, so the
+  apps' test suites can load them under plain Node (with `electron` stubbed);
+  heavy dependencies are required lazily (electron-updater, on a packaged
+  build's first update check).
+- **Bare imports come from the app.** `electron`, `electron-updater`,
+  `@types/node` and (for the renderer kit) `@types/jquery` resolve from the
+  app's own `node_modules`, which sits above `shared/`. Working on this repo on its own, they come from `tooling/`
   (`tooling/tsconfig.build.json`); `npm run setup` installs them with
   `--ignore-scripts`, so no Electron binary is downloaded.
 
@@ -141,7 +145,8 @@ sources into the app's program, outside its `rootDir`):
 }
 ```
 
-Renderer configs map `@showtrak/protocol/common` the same way. At runtime the
+Renderer configs map `@showtrak/protocol/common` the same way, and
+`@showtrak/protocol/ui/*` as the renderer kit shows below. At runtime the
 imports resolve by package name through `exports` (the `file:./shared`
 dependency), and esbuild bundles the compiled files from `shared/dist`.
 
@@ -164,6 +169,71 @@ module.exports = { mainBundleOptions: Bundle.mainBundleOptions, MAIN_BUNDLE: Bun
 
 if (require.main === module) Bundle.main();
 ```
+
+### The renderer kit
+
+`src/ui` is browser code that ShowTrak Server and ShowTrak Timers both run in
+their renderers (Server's window and Web UI, Timers' window), so a fix is made
+once rather than ported by hand. `tsconfig.build.ui.json` compiles it to
+`dist/ui` (CommonJS plus declarations; `npm run build` includes it, and
+`npm run build:ui` runs it alone), and each module is its own entry point,
+`@showtrak/protocol/ui/<module>`, so an app's bundle only carries what it
+imports.
+
+| Module                                   | What it holds                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| `ui/app-updates`                         | The Software Update modal (`CreateAppUpdates`)                     |
+| `ui/confirm-dialog`                      | The confirmation dialog (`CreateConfirmationDialog`)               |
+| `ui/toasts`                              | Alert-style toasts and `Notify` (`CreateToasts`)                   |
+| `ui/modal-header`                        | The modal titlebar (`buildModalHeader`)                            |
+| `ui/markdown`                            | Release notes: safe Markdown rendering and the HTML sanitizer      |
+| `ui/qr-svg`                              | QR codes as SVG strings (`QrToSvg`)                                |
+| `ui/menu-placement`, `ui/menu-typeahead` | The right-click menu's placement and type-to-search                |
+| `ui/settings-tabs`                       | Which Preferences tab shows, and how a setting's value reads       |
+| `ui/html`, `ui/errors`, `ui/icons`       | `Safe`, `ErrorMessage`, `HandleNonFatalError`, an app's icon style |
+
+What differs between the apps (names, icon style, which buttons open what, the
+preload API, what the app does around a dialog) is passed in once, in the app's
+own module, which re-exports the result:
+
+```ts
+// ShowTrak Timers, src/UI/js/app/lib/toasts.ts
+export const { Notify, showAlertStyleToast, iconForType } = CreateToasts({ IconStyle: 'fill' });
+export const ConfirmationDialog = CreateConfirmationDialog({
+  OnActiveChange: (Active) => setConfirmDialogActive(Active),
+});
+```
+
+ShowTrak Server and ShowTrak Timers build the kit with their own TypeScript
+(ShowTrak Client does not: it has no jQuery, and `tsconfig.build.json` never
+compiles `src/ui`), and typecheck their renderers against the built
+declarations:
+
+```jsonc
+// package.json
+"build:shared": "tsc -p shared/tsconfig.build.json && tsc -p shared/tsconfig.build.ui.json"
+
+// tsconfig.renderer.json and tsconfig.renderer.test.json
+"paths": {
+  "@showtrak/protocol": ["./shared/src/index.d.ts"],
+  "@showtrak/protocol/ui/*": ["./shared/dist/ui/*"],
+  "@showtrak/protocol/*": ["./shared/src/*"]
+},
+"include": [/* the app's own */ "shared/src/ui/vendors.d.ts"]
+```
+
+The rules for code in `src/ui`:
+
+- It belongs here only when both apps run the same logic. One app's surfaces
+  (Server's execution panel, Timers' Web Dashboard) stay in that app.
+- jQuery, Bootstrap and Howler are page globals loaded by `<script>` tags and
+  are never imported. `src/ui/vendors.d.ts` declares Bootstrap and Howler for
+  both apps, so an app does not declare them again; `@types/jquery` types `$`.
+- Nothing runs at import time: the apps' renderer tests `require()` these files
+  under plain Node, with no `document`, `window` or `$`.
+
+`spec/ui` covers each module in each app's configuration, against `dist/ui`,
+with a small fake page (`spec/ui/helpers/fake-dom.js`) rather than jsdom.
 
 ## Layout
 
@@ -193,8 +263,9 @@ src/
   runtime/            # @showtrak/protocol/runtime: Node code the apps share
   common/             # @showtrak/protocol/common: isomorphic code the apps share
   electron-main/      # @showtrak/protocol/electron-main: Electron main-process code the apps share
+  ui/                 # @showtrak/protocol/ui/*: the renderer kit (see above)
 scripts/              # build, dev, test and release scripts the apps call
-spec/                 # tests of the shared code, run by npm test
+spec/                 # behaviour specs for the compiled code and scripts, run by npm test
 type-tests/           # compile-time assertions about src/, run by npm run typecheck
 tooling/              # this repo's own lint, format and TypeScript tooling
 e2e/                  # end-to-end checks with real built apps (see e2e/README.md)
@@ -207,7 +278,8 @@ renderer), its view models, what it persists for later releases to read, and
 any socket it serves. Types that describe an app's internal module wiring,
 used inside one process of one app, stay in that app.
 
-Everything else under `src/` is types only. Where a contract has a runtime
+Everything outside `src/runtime`, `src/common`, `src/electron-main` and `src/ui`
+is types only. Where a contract has a runtime
 half, such as an app's channel allowlist, the values stay in the app and are
 checked against the types here. `ChannelListCheck` proves a list names exactly
 the declared channels, both ways:
@@ -246,7 +318,8 @@ npm run setup         # once: installs the tooling in tooling/
 npm run lint          # ESLint, with ShowTrak Server's rules
 npm run format        # Prettier (format:check to only check)
 npm run typecheck     # tsc --noEmit, plus the type tests
-npm run build         # compiles src/runtime, src/common and src/electron-main to dist/
+npm run build         # compiles src/runtime, src/common, src/electron-main and src/ui to dist/
+npm run build:ui      # compiles just the renderer kit
 npm test              # builds, then runs spec/**/*.spec.js
 ```
 
