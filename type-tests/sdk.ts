@@ -30,12 +30,12 @@ export type _CommandEvent = Expect<
   Equal<Parameters<SdkClientToServerEvents['command']>, SdkCommandEmitArgs>
 >;
 
-// The forwarded channels are the push map minus the two per-session events,
-// and the device-only ones are among them.
+// The forwarded channels are the push map minus the per-session events, and
+// the device-only ones are among them.
 export type _DeviceOnlyForwarded = Expect<Extends<SdkDeviceOnlyPushChannel, SdkPushChannel>>;
 export type _PerSession = Expect<
   Equal<
     Exclude<keyof SdkServerToClientEvents, SdkPushChannel>,
-    'paired' | 'MonitorLiveLevels:Frames'
+    'paired' | 'revoked' | 'MonitorLiveLevels:Frames'
   >
 >;
