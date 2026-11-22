@@ -112,6 +112,7 @@ src/
   scripts.d.ts        # the script catalog, as every supported Server sends it
   variables.d.ts      # show variables
   events.d.ts         # Socket.IO client<->server event maps
+  sdk.d.ts            # the /sdk control API (SDK, Companion module, ShowTrak Remote)
   app.d.ts            # plumbing every desktop app shares (IPC results, updates, settings)
   views.d.ts          # ShowTrak Server's view models (renderer + Web UI)
   preload.d.ts        # ShowTrak Server's Electron preload bridges
