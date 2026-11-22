@@ -113,6 +113,7 @@ src/
   variables.d.ts      # show variables
   events.d.ts         # Socket.IO client<->server event maps
   sdk.d.ts            # the /sdk control API (SDK, Companion module, ShowTrak Remote)
+  webui.d.ts          # ShowTrak Server's Web UI socket (/ui)
   app.d.ts            # plumbing every desktop app shares (IPC results, updates, settings)
   views.d.ts          # ShowTrak Server's view models (renderer + Web UI)
   preload.d.ts        # ShowTrak Server's Electron preload bridges
