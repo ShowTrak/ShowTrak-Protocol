@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Lint, format, typecheck & build
+    name: Lint, format, typecheck, build & test
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -46,3 +46,7 @@ jobs:
       # it has to compile, not just typecheck.
       - name: Build
         run: npm run build
+
+      # The specs in spec/ run against what Build compiled.
+      - name: Test
+        run: node --test "spec/**/*.spec.js"
