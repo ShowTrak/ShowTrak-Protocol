@@ -1,0 +1,32 @@
+{
+  // Emits the shared RENDERER kit (src/ui -> dist/ui): the browser-side modules
+  // ShowTrak Server and ShowTrak Timers both run, imported per module as
+  // `@showtrak/protocol/ui/<name>`.
+  //
+  // CommonJS plus declarations, like the runtime build: esbuild follows the
+  // package `exports` into dist/ui when it bundles an app's renderer, and the
+  // apps' renderer tests require the same files under plain Node. So nothing in
+  // src/ui may touch the DOM or a page global at import time, only when called.
+  //
+  // jQuery, Bootstrap and Howler are page globals loaded by <script> tags, never
+  // imported: @types/jquery types `$`, and src/ui/vendors.d.ts declares the rest.
+  // @types/jquery resolves from the consuming app's node_modules (typeRoots walk
+  // up from this directory), or from tooling/ when this repo builds itself.
+  //
+  // An app runs this with its own TypeScript in `build:shared`, after
+  // tsconfig.build.json.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src/ui",
+    "outDir": "./dist/ui",
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["jquery"]
+  },
+  "include": ["src/ui/**/*.ts"],
+  // tsconfig.json excludes src/ui from the ambient-declaration typecheck.
+  "exclude": []
+}

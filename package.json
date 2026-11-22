@@ -12,6 +12,9 @@
       ],
       "timers": [
         "src/timers/index.d.ts"
+      ],
+      "ui/*": [
+        "dist/ui/*.d.ts"
       ]
     }
   },
@@ -28,16 +31,22 @@
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "default": "./dist/runtime/index.js"
+    },
+    "./ui/*": {
+      "types": "./dist/ui/*.d.ts",
+      "default": "./dist/ui/*.js"
     }
   },
   "scripts": {
     "setup": "npm ci --prefix tooling",
-    "build": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.json --typeRoots ./tooling/node_modules/@types",
+    "build": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.json --typeRoots ./tooling/node_modules/@types && npm run build:ui",
+    "build:ui": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.ui.json --typeRoots ./tooling/node_modules/@types",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "typecheck": "node tooling/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit && node tooling/node_modules/typescript/bin/tsc -p tsconfig.build.json --noEmit --typeRoots ./tooling/node_modules/@types && node tooling/node_modules/typescript/bin/tsc -p type-tests/tsconfig.json && node tooling/node_modules/typescript/bin/tsc -p type-tests/tsconfig.exports.json",
     "lint": "node tooling/node_modules/eslint/bin/eslint.js -c tooling/lint.config.mjs .",
     "format": "node tooling/node_modules/prettier/bin/prettier.cjs \"**/*.{js,mjs,cjs,ts,md,json,yml}\" --write",
-    "format:check": "node tooling/node_modules/prettier/bin/prettier.cjs \"**/*.{js,mjs,cjs,ts,md,json,yml}\" --check"
+    "format:check": "node tooling/node_modules/prettier/bin/prettier.cjs \"**/*.{js,mjs,cjs,ts,md,json,yml}\" --check",
+    "test": "npm run build && node --test \"spec/**/*.spec.js\""
   },
   "author": {
     "name": "ShowTrak",
