@@ -98,6 +98,8 @@ test('the entry points load by package name', () => {
   for (const Name of ['IsTransientNetworkError', 'ChecksumFile', 'ResolveChannelRelease']) {
     assert.equal(typeof Runtime[Name], 'function', Name);
   }
+  // The level order loggers gate on is the one renderers read from common.
+  assert.equal(Runtime.LEVEL_RANK, Common.LEVEL_RANK);
 });
 
 test('the electron-main entry point loads without touching Electron', (t) => {

@@ -17,16 +17,14 @@
 // The Client had already fixed that; the Server had not. Deriving it in one
 // place is the point of this module.
 
+import { LEVEL_RANK } from '../common/log-levels';
 import type { LoggerLike } from './network-errors';
 
-/** Severity ordering. A message is emitted when its rank <= the active level. */
-export const LEVEL_RANK: Readonly<Record<string, number>> = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  debug: 3,
-  trace: 4,
-};
+/**
+ * Severity ordering. A message is emitted when its rank <= the active level.
+ * Defined in @showtrak/protocol/common, where renderers can reach it too.
+ */
+export { LEVEL_RANK };
 
 export interface DefaultLevelInputs {
   /** process.env.NODE_ENV */
