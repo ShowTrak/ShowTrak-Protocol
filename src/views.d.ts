@@ -12,7 +12,6 @@ import type {
   ClientDisplay,
   NetworkInterface,
   RunningApplicationItem,
-  RunningApplicationsStatus,
   AudioCapabilities,
   AudioDirection,
   AudioEndpoint,
@@ -468,9 +467,12 @@ export interface ClientDisplayView extends ClientDisplay {
 }
 
 export interface RunningApplicationViewItem extends RunningApplicationItem {
-  Key?: string;
+  /** Case-insensitive identity of the application; null when its name normalises to nothing. */
+  Key?: string | null;
   IsCritical?: boolean;
   IsRunning?: boolean;
+  /** A monitored application that is not running (listed with Count 0). */
+  Missing?: boolean;
   /** Owns the focused window. Only ever true where the client reports it. */
   IsForeground?: boolean;
   /** Monitored and required to hold the foreground (see CriticalApplication). */
@@ -479,12 +481,29 @@ export interface RunningApplicationViewItem extends RunningApplicationItem {
   RequireResponding?: boolean;
 }
 
+/**
+ * `RunningApplicationsView.Status`: the client's collector health as the server
+ * keeps it. Normalised from whatever the client reported, so `Platform` is
+ * null rather than absent when the client did not say.
+ */
+export interface RunningApplicationsViewStatus {
+  /**
+   * A {@link RunningApplicationsState} from any released client, lower-cased.
+   * The server passes through whatever string arrives, so it is typed as one.
+   */
+  State: string;
+  Message: string | null;
+  Platform: string | null;
+}
+
 export interface RunningApplicationsView {
-  SampledAt?: number;
+  /** Null until this connection has reported its applications. */
+  SampledAt?: number | null;
   TotalCount?: number;
   Truncated?: boolean;
+  /** The running applications, then any monitored ones that are missing. */
   Items: RunningApplicationViewItem[];
-  Status?: RunningApplicationsStatus;
+  Status?: RunningApplicationsViewStatus;
   NoChanges?: boolean;
   /** Absent when the client cannot report it; see RunningApplicationsSnapshot. */
   Foreground?: string | null;
@@ -834,6 +853,12 @@ export interface MonitoringSettingField {
   /** Per-input hint shown as a hover popover on an info icon beside the input. */
   Note?: string;
   /**
+   * Marks a credential (password, passcode, community string). Surfaces that
+   * must not hand credentials out redact the value; the stored value and the
+   * probe are unaffected.
+   */
+  Sensitive?: boolean;
+  /**
    * When set, the field renders only while the referenced sibling setting equals
    * the value. An array is ANDed: every condition must hold. Use the array form
    * to gate a field behind both an "enable" toggle and a specific operator.
@@ -962,13 +987,24 @@ export interface MonitoringMethodView {
 
 /** A method's LAN discovery signature (see MonitoringMethods/types.ts). */
 export interface MonitoringMethodDiscovery {
+  /**
+   * How sure a match makes us: 'high' for a port or service only this kind of
+   * device uses, 'low' for one many devices share (80, 8080, telnet).
+   */
   Confidence: 'high' | 'medium' | 'low';
+  /** Any of these TCP ports open is a match. */
   TcpPorts?: number[];
+  /** mDNS service types, `_type._proto` (e.g. '_qlab._tcp'). Case-insensitive. */
   ServiceTypes?: string[];
+  /** Matches a projector that answered PJLink's UDP search. */
   PJLink?: boolean;
+  /** Setting filled with the port the match was made on. */
   PortSetting?: string;
+  /** Setting filled with the matching mDNS service's instance name (Dante, NDI). */
   NameSetting?: string;
+  /** Settings implied by which port matched, keyed by port number (443 means `Protocol: 'https'`). */
   PortSettings?: Record<string, Record<string, unknown>>;
+  /** Settings implied by which mDNS service type matched, keyed by service type. */
   ServiceSettings?: Record<string, Record<string, unknown>>;
 }
 
@@ -1194,19 +1230,26 @@ export interface FreeKioskMetricCatalog {
   Groups: FreeKioskMetricGroupView[];
 }
 
+/** Which section of a terminal's control panel a command sits in. */
+export type FreeKioskCommandGroup = 'Power' | 'Display' | 'Content' | 'Audio' | 'Maintenance';
+
 /** A control the UI may offer for a terminal. The server's map is the allowlist. */
 export interface FreeKioskCommandDef {
   ID: string;
   Label: string;
+  /** Bootstrap Icons name without the `bi-` prefix. */
   Icon: string;
-  Group: 'Power' | 'Display' | 'Content' | 'Audio' | 'Maintenance';
+  /** The FreeKiosk REST endpoint the server calls. Sent along with the catalog; the UI never calls it. */
+  Method: 'GET' | 'POST';
+  Path: string;
+  Group: FreeKioskCommandGroup;
   Params?: MonitoringSettingField[];
   /**
    * Display modes this command does anything in. Absent means all of them. The
    * device accepts an out-of-mode command and silently no-ops, so the server
    * refuses these rather than reporting a success that never happened.
    */
-  Modes?: FreeKioskDisplayMode[];
+  Modes?: readonly FreeKioskDisplayMode[];
   /** The device drops the connection carrying this out; that is success. */
   ExpectDisconnect?: boolean;
   /** Needs a confirmation dialog before running. */
@@ -1647,6 +1690,17 @@ export interface OSCRouteValue {
   Note?: string;
 }
 
+/** See OSCRoute.Values. */
+export interface OSCRouteValueList {
+  /** The placeholder(s) the entries fill, e.g. `Method/ActionID`. */
+  Param: string;
+  Entries: OSCRouteValue[];
+}
+
+/**
+ * An OSC route as listed in the OSC reference (`SetOSCList`). The server's own
+ * route table adds the handler, which is not serialised.
+ */
 export interface OSCRoute {
   Title: string;
   Path: string;
@@ -1655,11 +1709,7 @@ export interface OSCRoute {
    * actions, FreeKiosk commands). Absent for routes whose values are the
    * operator's own data, such as slugs and script IDs.
    */
-  Values?: {
-    /** The placeholder(s) the entries fill, e.g. `Method/ActionID`. */
-    Param: string;
-    Entries: OSCRouteValue[];
-  };
+  Values?: OSCRouteValueList;
 }
 
 export type OSCBulkActionType =
