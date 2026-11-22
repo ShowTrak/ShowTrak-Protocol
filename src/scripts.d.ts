@@ -276,12 +276,19 @@ export type ScriptCatalogWireEntry =
 // ---- Execution results ------------------------------------------------------
 
 /**
- * The third argument of a client's `ScriptExecutionResponse`: `true` when an
- * `ExecuteScript` run succeeded, `null` when it failed. Absent for every other
- * task (`UpdateSoftware`, `UpdateSoftwareFromLAN`, `DeleteScripts`,
- * `UpdateScripts`). Every Client release since 3.0.0 sends exactly this; the
- * Server reads only the error argument, where null means success.
+ * The third argument of a client's `ScriptExecutionResponse` for an
+ * `ExecuteScript` task: `null` when the run failed, otherwise the flag its script
+ * runner returned beside the error, which every Client release since 3.0.0 sets
+ * to `true` for a run that succeeded. Absent for every other task
+ * (`UpdateSoftware`, `UpdateSoftwareFromLAN`, `DeleteScripts`, `UpdateScripts`).
+ * The Server reads only the error argument, where null means success.
+ *
+ * `false` is possible in principle: a client sends a null error whenever its
+ * runner's error is falsy, so a runner that failed with an empty message would
+ * arrive as success with `false` here. No Client release builds an empty message
+ * from any catalog a released Server sends, so in practice this is `true` or
+ * `null`.
  */
-export type ScriptExecutionResult = true | null;
+export type ScriptExecutionResult = boolean | null;
 
 export {};
