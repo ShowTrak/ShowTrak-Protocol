@@ -128,7 +128,7 @@ export interface LibrarySoundView {
   Label: string;
   OriginalName: string;
   Extension: string;
-  /** 0-100. */
+  /** A percentage, 0-200 (the Sound Library's slider sets up to 100). */
   Volume: number;
   /** Bytes. */
   Size: number;
@@ -250,7 +250,10 @@ export interface InvokeMap {
   'App:GetLicense': { Args: []; Result: ResultTuple<{ license: string }> };
   'AppUpdate:Check': { Args: []; Result: void };
   'AppUpdate:Install': { Args: []; Result: void };
-  /** Confirmed skips the unsaved-changes prompt. */
+  /**
+   * Confirmed: the renderer has already asked the operator to confirm the quit
+   * (Stop Accidental Shutdowns), so the main process quits without asking again.
+   */
   Shutdown: { Args: [Confirmed?: boolean]; Result: void };
 }
 

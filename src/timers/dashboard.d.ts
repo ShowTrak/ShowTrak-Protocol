@@ -23,7 +23,7 @@ export interface DashboardTimer {
   Type: TimerType;
   Name: string;
   Description: string;
-  /** Milliseconds; null for stopwatches and World Clocks. */
+  /** Milliseconds; null for stopwatches, World Clocks, and a Timer given none. */
   Duration: number | null;
   /** The duration as mm:ss or hh:mm:ss ('00:00' when there is none). Sent since 1.x. */
   TotalTimeReadable: string;
