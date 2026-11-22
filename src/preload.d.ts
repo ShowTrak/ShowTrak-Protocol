@@ -674,3 +674,10 @@ export interface ShowTrakAPI {
   SetRainbowMode(Enabled: boolean): Promise<boolean>;
   OnRainbowModeUpdated(callback: (Enabled: boolean) => void): Unsubscribe;
 }
+
+/**
+ * `window.API` in the splash (preloader) window, exposed by its own preload
+ * (src/bridge_preloader.ts): the main window's GetConfig on the same channel
+ * ('Config:Get'), and nothing else.
+ */
+export type PreloaderAPI = Pick<ShowTrakAPI, 'GetConfig'>;
