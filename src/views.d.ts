@@ -27,6 +27,7 @@ import type {
 } from './telemetry';
 import type { Vitals } from './vitals';
 import type { IntegratedAction } from './integrated';
+import type { Setting, SettingGroup, UpdateChannel } from './app';
 import type { ScriptCatalogEntry, ScriptConfirmationLevel, ScriptConsoleFilter } from './scripts';
 
 /**
@@ -1520,32 +1521,11 @@ export interface FogTaskView {
 
 // ---- Settings / config ----------------------------------------------------
 
-export interface SettingView {
-  Group: string;
-  Key: string;
-  Title: string;
-  Description: string;
-  Type: 'BOOLEAN' | 'INTEGER' | 'STRING' | 'PASSWORD' | 'OPTION' | 'SLIDER';
-  Value: boolean | number | string;
-  isDefault: boolean;
-  DefaultValue: boolean | number | string;
-  OnUpdateEvent: string | null;
-  Options: string[] | null;
-  Min: number | null;
-  Max: number | null;
-  Unit: string | null;
-  /** Shown in Preferences only while every BOOLEAN setting named here is on. */
-  ShowWhen?: string[] | null;
-}
+/** A setting as the renderer receives it (`GetSettings`, `UpdateSettings`). */
+export type SettingView = Setting;
 
-export interface SettingGroupView {
-  Name: string;
-  Title: string;
-  /** As SettingView.ShowWhen, for the whole group and its tab. */
-  ShowWhen?: string[] | null;
-  /** Renders inside this group's tab, under its own heading, not as a tab. */
-  Parent?: string | null;
-}
+/** A settings group as the renderer receives it (`UpdateSettings`). */
+export type SettingGroupView = SettingGroup;
 
 export interface AppConfig {
   Application: { Version: string; Name: string; Port: number; IsPackaged: boolean };
@@ -1598,7 +1578,7 @@ export interface UpdateManagerStatus {
   /** Whether the downloaded build is a pre-release (deploying it needs confirmation). */
   Prerelease?: boolean;
   /** The server's update channel. Pre-release builds are only offered on 'beta'. */
-  Channel?: 'stable' | 'beta';
+  Channel?: UpdateChannel;
 }
 
 export interface UpdateReleaseOption {
@@ -1628,15 +1608,6 @@ export interface UpdateDeployResult {
   SelectedCount: number;
   TotalClientCount: number;
   FeedPath: string;
-}
-
-/** Application self-update lifecycle status (`OnAppUpdateStatus`). */
-export interface AppUpdateStatus {
-  state?: string;
-  info?: { version?: string; tag?: string; notes?: string; [key: string]: unknown } | null;
-  percent?: number;
-  simulated?: boolean;
-  error?: string;
 }
 
 // ---- Network discovery ----------------------------------------------------

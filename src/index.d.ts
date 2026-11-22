@@ -11,5 +11,6 @@ export * from './execution';
 export * from './scripts';
 export * from './variables';
 export * from './events';
+export * from './app';
 export * from './views';
 export * from './preload';

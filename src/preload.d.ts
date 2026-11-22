@@ -13,6 +13,14 @@
 // where the payload is opaque/dynamic; the latter are tightened as the renderer
 // files are migrated and their real usage is known.
 
+import type {
+  AppMode,
+  AppUpdateStatus,
+  ResultTuple,
+  ShowFileOpenOutcome,
+  ShowFileUpgrade,
+  Unsubscribe,
+} from './app';
 import type { ExecutionOutputView } from './execution';
 import type { ScriptCatalogEntry, ScriptWhitelistScope } from './scripts';
 import type { AudioLevelRequest, USBDevice } from './telemetry';
@@ -23,7 +31,6 @@ import type {
   AlertTriggerType,
   AlertTriggeredEvent,
   AppConfig,
-  AppUpdateStatus,
   AudioAssetData,
   AudioAssetInspection,
   AudioAssetView,
@@ -194,27 +201,6 @@ export interface CriticalStorageVolumePayload {
   RequireWritable?: boolean;
   RequireHealthy?: boolean;
 }
-
-/** Unsubscribe handle returned by every `subscribe`-backed API method. */
-export type Unsubscribe = () => void;
-
-/** Application mode. */
-export type AppMode = 'SHOW' | 'EDIT' | string;
-
-/** `[error, data]` tuple returned by manager-backed IPC handlers. */
-export type ResultTuple<T = unknown> = [string | null, T | null];
-
-/** A show file last saved by an older ShowTrak Server, awaiting the operator's go-ahead to upgrade. */
-export interface ShowFileUpgrade {
-  FilePath: string;
-  FileName: string;
-  /** Version that last saved the file; null when it predates version stamping. */
-  FileVersion: string | null;
-  CurrentVersion: string;
-}
-
-export type ShowFileOpenOutcome =
-  { Status: 'Opened'; FilePath: string } | { Status: 'UpgradeRequired'; Upgrade: ShowFileUpgrade };
 
 /**
  * The preload API exposed on `window.API`.
