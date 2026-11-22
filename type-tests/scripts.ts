@@ -108,9 +108,9 @@ export type _LegacyIsNotCurrent = Expect<
 export type _OldModernIsNotCurrent = Expect<
   Equal<Extends<ScriptCatalogWireScript, ScriptCatalogScript>, false>
 >;
-// The execution panel's script is a catalog entry or a stub.
+// The execution list carries only the script's ID and name, never the catalog entry.
 export type _ExecutionScript = Expect<
-  Equal<ScriptExecutionView['Script'], ScriptCatalogEntry | { ID: string; Name: string }>
+  Equal<ScriptExecutionView['Script'], { ID: string; Name: string }>
 >;
 
 // ---- The Server's catalog classes can implement the current shapes ----------------

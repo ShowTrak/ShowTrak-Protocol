@@ -27,7 +27,7 @@ import type {
 import type { Vitals } from './vitals';
 import type { IntegratedAction } from './integrated';
 import type { Setting, SettingGroup, UpdateChannel } from './app';
-import type { ScriptCatalogEntry, ScriptConfirmationLevel, ScriptConsoleFilter } from './scripts';
+import type { ScriptConfirmationLevel, ScriptConsoleFilter } from './scripts';
 
 /**
  * The conditions a critical USB device (by serial or by name) must keep. A
@@ -791,17 +791,23 @@ export interface ScriptExecutionTimer {
   Duration: number | null;
 }
 
-/** `UpdateScriptExecutions` push entry. */
+/**
+ * `UpdateScriptExecutions` push entry, to the renderer, the Web UI and `/sdk`.
+ * The server pushes a serialisable projection (its ToPublicScriptExecution),
+ * not the execution itself: the client and the script are reduced to what the
+ * execution panel shows.
+ */
 export interface ScriptExecutionView {
+  /** A server-side task (deploying scripts, an update) rather than a script run. */
   Internal: boolean;
   RequestID: string;
   Status: 'Pending' | 'Failed' | 'Completed';
   Progress: number;
   StatusText: string;
   Timer: ScriptExecutionTimer;
-  Client: ClientView;
-  Script: ScriptCatalogEntry | { ID: string; Name: string };
-  Error?: string | null;
+  Client: { UUID: string | null; Nickname: string | null; Hostname: string | null };
+  Script: { ID: string; Name: string };
+  Error: string | null;
 }
 
 // ---- Monitoring -----------------------------------------------------------
