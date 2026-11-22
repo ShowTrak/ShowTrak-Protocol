@@ -37,7 +37,7 @@ export default defineConfig([
       'no-empty': ['error', { allowEmptyCatch: true }],
       '@typescript-eslint/no-explicit-any': 'error',
       // A require() stays where a module is loaded lazily on purpose (start-up
-      // cost: electron-updater in src/electron/app-updater.ts), typed as
+      // cost: electron-updater in src/electron-main/app-updater.ts), typed as
       // `require('x') as typeof import('x')`; every other module is imported.
       // Off in ShowTrak Server for the same reason.
       '@typescript-eslint/no-require-imports': 'off',

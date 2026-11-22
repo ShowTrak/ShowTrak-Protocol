@@ -1,4 +1,4 @@
-// src/electron/first-paint.ts gates showing the main window at startup on the
+// src/electron-main/first-paint.ts gates showing the main window at startup on the
 // renderer having its initial data, instead of a fixed 800 ms after load. A
 // renderer that never initialises must still get its window shown. Ported from
 // ShowTrak Server's main-first-paint and Timers' main-window tests. Each test
@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 
 const { fresh } = require('../helpers/module-mocks');
 
-const FirstPaint = () => fresh('electron', 'first-paint');
+const FirstPaint = () => fresh('electron-main', 'first-paint');
 
 test('waiters are released by the first delivery', async () => {
   const FP = FirstPaint();

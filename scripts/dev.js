@@ -12,7 +12,7 @@
 //   markup / CSS / static assets  copy on change  -> reload the window
 //   shared code (shared/src)      build:shared    -> tsc and esbuild pick it up
 //
-// The window reload is done by the app itself (@showtrak/protocol/electron's
+// The window reload is done by the app itself (@showtrak/protocol/electron-main's
 // StartDevReload, turned on by SHOWTRAK_DEV_RELOAD=1 here) when it sees dist/UI
 // change, so the main process, and everything connected to it, survives a
 // renderer edit. Renderer type errors are reported by --noEmit watchers but
@@ -36,7 +36,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-/** Read by StartDevReload in @showtrak/protocol/electron. */
+/** Read by StartDevReload in @showtrak/protocol/electron-main. */
 const DEV_RELOAD_ENV = 'SHOWTRAK_DEV_RELOAD';
 
 function log(message) {

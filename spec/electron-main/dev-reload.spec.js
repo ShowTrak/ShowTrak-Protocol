@@ -1,4 +1,4 @@
-// src/electron/dev-reload.ts: reloading the window when the renderer is
+// src/electron-main/dev-reload.ts: reloading the window when the renderer is
 // rebuilt, only ever in a development run started by the dev script. Ported
 // from ShowTrak Timers' main-process-guards tests. Each test loads the module
 // afresh: it starts once per process.
@@ -24,7 +24,7 @@ const restore = installModuleMocks([
 ]);
 test.after(() => restore());
 
-const DevReload = () => fresh('electron', 'dev-reload');
+const DevReload = () => fresh('electron-main', 'dev-reload');
 
 function withEnv(Value, Fn) {
   const Before = process.env.SHOWTRAK_DEV_RELOAD;

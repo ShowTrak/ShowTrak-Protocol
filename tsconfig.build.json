@@ -2,7 +2,7 @@
   // Emits the shared RUNTIME code, one entry point per folder:
   //   src/runtime  -> dist/runtime   @showtrak/protocol/runtime   (Node-only)
   //   src/common   -> dist/common    @showtrak/protocol/common    (isomorphic)
-  //   src/electron -> dist/electron  @showtrak/protocol/electron  (Electron main process)
+  //   src/electron-main -> dist/electron-main  @showtrak/protocol/electron-main  (Electron main process)
   //
   // Separate from tsconfig.json, which typechecks the ambient .d.ts protocol
   // declarations with noEmit. Those two jobs are genuinely different: the
@@ -31,5 +31,5 @@
     // tsconfig.common.json enforces (this program cannot: it sees Node's types).
     "types": ["node"]
   },
-  "include": ["src/runtime/**/*.ts", "src/common/**/*.ts", "src/electron/**/*.ts"]
+  "include": ["src/runtime/**/*.ts", "src/common/**/*.ts", "src/electron-main/**/*.ts"]
 }

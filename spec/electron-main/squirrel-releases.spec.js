@@ -1,4 +1,4 @@
-// src/electron/squirrel-releases.ts: recovering the incoming version and
+// src/electron-main/squirrel-releases.ts: recovering the incoming version and
 // download progress that Electron's Squirrel.Windows updater does not report.
 // Ported from ShowTrak Server's and ShowTrak Timers' main-squirrel-releases
 // tests, with each app's package names.
@@ -12,7 +12,7 @@ const {
   parseSquirrelReleases,
   newestSquirrelPackages,
   readSquirrelDownloadPercent,
-} = require('../../dist/electron/squirrel-releases');
+} = require('../../dist/electron-main/squirrel-releases');
 
 for (const [Name, Version] of [
   ['showtrak_server', '3.26.1'],

@@ -19,8 +19,8 @@
       "common": [
         "dist/common/index.d.ts"
       ],
-      "electron": [
-        "dist/electron/index.d.ts"
+      "electron-main": [
+        "dist/electron-main/index.d.ts"
       ]
     }
   },
@@ -42,9 +42,9 @@
       "types": "./dist/common/index.d.ts",
       "default": "./dist/common/index.js"
     },
-    "./electron": {
-      "types": "./dist/electron/index.d.ts",
-      "default": "./dist/electron/index.js"
+    "./electron-main": {
+      "types": "./dist/electron-main/index.d.ts",
+      "default": "./dist/electron-main/index.js"
     }
   },
   "scripts": {

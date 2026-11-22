@@ -35,7 +35,7 @@ function exactly(name) {
   return (request) => request === name;
 }
 
-/** The path of a compiled module: dist('electron', 'app-updater'). */
+/** The path of a compiled module: dist('electron-main', 'app-updater'). */
 function dist(...segments) {
   return path.join(DIST, ...segments);
 }

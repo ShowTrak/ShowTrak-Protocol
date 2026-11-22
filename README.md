@@ -105,12 +105,12 @@ compiled JavaScript, in three entry points that `tsconfig.build.json` builds int
 `dist/` (each app runs it as `npm run build:shared`, with its own TypeScript),
 plus plain-JavaScript build scripts:
 
-| Import                        | Source         | What it is                                                                                                                                                                                    | Runs in                   |
-| ----------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `@showtrak/protocol/runtime`  | `src/runtime`  | Node infrastructure: network-error classification, checksums, the update-channel rule, the logging primitives and the Server and Timers logger, the process guards, durable file writes       | main processes            |
-| `@showtrak/protocol/common`   | `src/common`   | Isomorphic helpers: type guards, the loose version order, script argument parsing. Nothing but the language: no Node, DOM or Electron (`tsconfig.common.json` enforces it)                    | main processes, renderers |
-| `@showtrak/protocol/electron` | `src/electron` | Electron main-process helpers: the self-updater and its Squirrel helpers, show file associations, window guards and zoom shortcuts, the first-paint signal, dev reload, the renderer push bus | main processes            |
-| `shared/scripts/*.js`         | `scripts`      | Build, dev, test and release tooling: the main and renderer bundles, assets, CSS, `npm start`, `npm test`, `npm run publish`, the Electron locale trim                                        | Node, when building       |
+| Import                             | Source              | What it is                                                                                                                                                                                    | Runs in                   |
+| ---------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `@showtrak/protocol/runtime`       | `src/runtime`       | Node infrastructure: network-error classification, checksums, the update-channel rule, the logging primitives and the Server and Timers logger, the process guards, durable file writes       | main processes            |
+| `@showtrak/protocol/common`        | `src/common`        | Isomorphic helpers: type guards, the loose version order, script argument parsing. Nothing but the language: no Node, DOM or Electron (`tsconfig.common.json` enforces it)                    | main processes, renderers |
+| `@showtrak/protocol/electron-main` | `src/electron-main` | Electron main-process helpers: the self-updater and its Squirrel helpers, show file associations, window guards and zoom shortcuts, the first-paint signal, dev reload, the renderer push bus | main processes            |
+| `shared/scripts/*.js`              | `scripts`           | Build, dev, test and release tooling: the main and renderer bundles, assets, CSS, `npm start`, `npm test`, `npm run publish`, the Electron locale trim                                        | Node, when building       |
 
 What holds for all of it:
 
@@ -136,7 +136,7 @@ sources into the app's program, outside its `rootDir`):
   "@showtrak/protocol": ["./shared/src/index.d.ts"],
   "@showtrak/protocol/runtime": ["./shared/dist/runtime/index.d.ts"],
   "@showtrak/protocol/common": ["./shared/dist/common/index.d.ts"],
-  "@showtrak/protocol/electron": ["./shared/dist/electron/index.d.ts"],
+  "@showtrak/protocol/electron-main": ["./shared/dist/electron-main/index.d.ts"],
   "@showtrak/protocol/*": ["./shared/src/*"]
 }
 ```
@@ -192,7 +192,7 @@ src/
   timers/             # @showtrak/protocol/timers: ShowTrak Timers' IPC, views, Web Dashboard
   runtime/            # @showtrak/protocol/runtime: Node code the apps share
   common/             # @showtrak/protocol/common: isomorphic code the apps share
-  electron/           # @showtrak/protocol/electron: Electron main-process code the apps share
+  electron-main/      # @showtrak/protocol/electron-main: Electron main-process code the apps share
 scripts/              # build, dev, test and release scripts the apps call
 spec/                 # tests of the shared code, run by npm test
 type-tests/           # compile-time assertions about src/, run by npm run typecheck
@@ -246,7 +246,7 @@ npm run setup         # once: installs the tooling in tooling/
 npm run lint          # ESLint, with ShowTrak Server's rules
 npm run format        # Prettier (format:check to only check)
 npm run typecheck     # tsc --noEmit, plus the type tests
-npm run build         # compiles src/runtime, src/common and src/electron to dist/
+npm run build         # compiles src/runtime, src/common and src/electron-main to dist/
 npm test              # builds, then runs spec/**/*.spec.js
 ```
 

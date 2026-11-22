@@ -1,4 +1,4 @@
-// src/electron/app-updater.ts: an app's own self-update flow. Ported from
+// src/electron-main/app-updater.ts: an app's own self-update flow. Ported from
 // ShowTrak Timers' main-app-updater tests (a superset of ShowTrak Server's),
 // run against one updater with Timers' identity. What depends on the identity
 // is checked for both apps in app-updater-identity.spec.js.

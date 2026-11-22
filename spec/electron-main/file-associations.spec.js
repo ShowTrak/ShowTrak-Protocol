@@ -1,4 +1,4 @@
-// src/electron/file-associations.ts: show files opened from the operating
+// src/electron-main/file-associations.ts: show files opened from the operating
 // system, created with each app's extension and Windows names. What is at
 // stake: a double-click in Finder or Explorer swaps out the running show, so
 // it must find the right file, and only ever open the one the operator was
@@ -13,7 +13,7 @@ const path = require('node:path');
 const {
   CreateShowFileAssociations,
   SquirrelStubExecutable,
-} = require('../../dist/electron/file-associations');
+} = require('../../dist/electron-main/file-associations');
 
 const APPS = [
   {

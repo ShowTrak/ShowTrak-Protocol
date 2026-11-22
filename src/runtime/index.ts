@@ -14,7 +14,7 @@
 // module needs an app's identity (its name, its logs folder, its logger), it
 // takes it as an argument. Code that runs in renderers too belongs in
 // @showtrak/protocol/common; code that needs Electron in
-// @showtrak/protocol/electron.
+// @showtrak/protocol/electron-main.
 export * from './network-errors';
 export * from './checksum';
 export * from './logging';

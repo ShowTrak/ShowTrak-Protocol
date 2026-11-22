@@ -26,7 +26,7 @@
 //                              plugin-auto-unpack-natives)
 //   electron-updater           large and only ever required lazily, on the
 //                              first update check of a packaged build
-//                              (@showtrak/protocol/electron's updater)
+//                              (@showtrak/protocol/electron-main's updater)
 //   ...and whatever else the app names (the Server: mqtt, also lazy).
 //
 // An external is resolved from dist/ at runtime, so it must be a top-level

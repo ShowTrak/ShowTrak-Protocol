@@ -1,4 +1,4 @@
-// @showtrak/protocol/electron: Electron main-process helpers the ShowTrak
+// @showtrak/protocol/electron-main: Electron main-process helpers the ShowTrak
 // desktop apps share.
 //
 // Compiled JavaScript like @showtrak/protocol/runtime, for code that needs
@@ -6,6 +6,10 @@
 // only for an Electron app's main process: the self-updater and its Squirrel
 // helpers, show file associations, the per-window guards and zoom shortcuts,
 // the first-paint signal, development reload and the renderer push bus.
+//
+// Named electron-main rather than electron: the apps' test suites stub the
+// 'electron' module by matching the end of the request, which would catch
+// `@showtrak/protocol/electron` too and replace this whole entry point.
 //
 // Each module takes the app's identity (its release repository, show file
 // extension, logger, window) as an argument and keeps nothing app-specific.

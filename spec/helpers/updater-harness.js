@@ -1,4 +1,4 @@
-// Spec helper for src/electron/app-updater.ts: stands in for Electron (`app`,
+// Spec helper for src/electron-main/app-updater.ts: stands in for Electron (`app`,
 // the Squirrel autoUpdater, `net`), electron-updater and the macOS codesign
 // probe, and creates an updater for a given app identity.
 //
@@ -84,7 +84,7 @@ function createUpdaterHarness() {
     },
   ]);
 
-  const { CreateAppUpdater } = require(dist('electron', 'app-updater'));
+  const { CreateAppUpdater } = require(dist('electron-main', 'app-updater'));
 
   /**
    * An updater for `Identity` (CreateAppUpdater's options, less the logger),

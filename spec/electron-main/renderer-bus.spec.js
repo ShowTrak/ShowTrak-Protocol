@@ -1,9 +1,9 @@
-// src/electron/renderer-bus.ts: every main-process push fans out to every
+// src/electron-main/renderer-bus.ts: every main-process push fans out to every
 // renderer surface (the desktop window, each Web UI socket) through one bus.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { CreateRendererBus } = require('../../dist/electron/renderer-bus');
+const { CreateRendererBus } = require('../../dist/electron-main/renderer-bus');
 
 test('a push reaches every registered sink, with its arguments in order', () => {
   const Bus = CreateRendererBus();

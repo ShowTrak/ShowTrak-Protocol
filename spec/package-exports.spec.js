@@ -13,7 +13,7 @@ const { installModuleMocks, exactly } = require('./helpers/module-mocks');
 const ROOT = path.join(__dirname, '..');
 const Package = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
-const COMPILED = ['runtime', 'common', 'electron'];
+const COMPILED = ['runtime', 'common', 'electron-main'];
 
 test('every export and typesVersions target exists', () => {
   for (const [Entry, Targets] of Object.entries(Package.exports)) {
@@ -62,12 +62,12 @@ test('the entry points load by package name', () => {
   }
 });
 
-test('the electron entry point loads without touching Electron', (t) => {
+test('the electron-main entry point loads without touching Electron', (t) => {
   // Its modules read Electron's members when called, never while loading, so
   // a stub with nothing on it is enough to load every one of them.
   const restore = installModuleMocks([{ match: exactly('electron'), value: {} }]);
   t.after(restore);
-  const Electron = require('@showtrak/protocol/electron');
+  const Electron = require('@showtrak/protocol/electron-main');
   for (const Name of [
     'CreateAppUpdater',
     'CreateShowFileAssociations',

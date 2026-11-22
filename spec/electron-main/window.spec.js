@@ -3,10 +3,10 @@
 // ShowTrak Server's window-zoom and main-guards-and-hydration tests) and the
 // Client's main-window-guards test:
 //
-//   src/electron/window-guards.ts  external http(s) links open in the OS
+//   src/electron-main/window-guards.ts  external http(s) links open in the OS
 //     browser and never in-app; in-app navigation away from the UI is blocked;
 //     both fail CLOSED.
-//   src/electron/window-zoom.ts    Ctrl +/-/0 zoom on Windows and Linux, which
+//   src/electron-main/window-zoom.ts    Ctrl +/-/0 zoom on Windows and Linux, which
 //     run without an application menu (macOS gets it from the viewMenu role).
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -39,9 +39,9 @@ const restore = installModuleMocks([
 ]);
 test.after(() => restore());
 
-const { applyWindowSecurityGuards } = require(dist('electron', 'window-guards'));
+const { applyWindowSecurityGuards } = require(dist('electron-main', 'window-guards'));
 const { applyWindowZoomShortcuts, ZOOM_LEVEL_MIN, ZOOM_LEVEL_MAX } = require(
-  dist('electron', 'window-zoom')
+  dist('electron-main', 'window-zoom')
 );
 
 // --- window-guards ------------------------------------------------------------

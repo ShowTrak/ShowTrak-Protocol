@@ -1,4 +1,4 @@
-// src/electron/app-updater.ts with each app's identity, as ShowTrak Server and
+// src/electron-main/app-updater.ts with each app's identity, as ShowTrak Server and
 // ShowTrak Timers create it: every URL, header and file the updater derives
 // from CreateAppUpdater's options names that app's repository and nothing else.
 // The behaviour itself is covered by app-updater.spec.js.
