@@ -1,6 +1,7 @@
 // Bundles an app's browser-side TypeScript with esbuild: the Electron
 // renderer, its splash window, and any page or service worker the app serves
-// (ShowTrak Server and ShowTrak Timers).
+// (ShowTrak Server and ShowTrak Timers), or the config window and the overlay
+// pages (ShowTrak Client, whose bundles have never kept names: keepNames off).
 //
 // The Node-side code is compiled by `tsc` into dist/. The renderer runs in a
 // browser/Electron-renderer context and is authored as ES modules that are
