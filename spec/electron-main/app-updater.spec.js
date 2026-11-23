@@ -600,6 +600,37 @@ test('a Squirrel download is named by its release name, or else by the version R
     await Installed;
     assert.deepEqual(QuitHooks, ['before-quit', 'quitAndInstall']);
     assert.equal(statuses().at(-1).state, 'installing');
+
+    // A hook that returns a promise (the app closing its database) is waited
+    // for: the installer starts the new version as soon as it is called.
+    QuitHooks.length = 0;
+    let FinishCleanup = () => {};
+    Manager.SetBeforeQuitForUpdate(() => {
+      QuitHooks.push('cleanup started');
+      return new Promise((resolve) => {
+        FinishCleanup = () => {
+          QuitHooks.push('cleanup finished');
+          resolve();
+        };
+      });
+    });
+    process.execPath = path.join(Root, 'app-2.0.0', 'ShowTrak Timers.exe');
+    const Waiting = withPlatform('win32', () => handlers['AppUpdate:Install']());
+    process.execPath = ExecPath;
+    await flush();
+    assert.deepEqual(QuitHooks, ['cleanup started']);
+    FinishCleanup();
+    await Waiting;
+    assert.deepEqual(QuitHooks, ['cleanup started', 'cleanup finished', 'quitAndInstall']);
+
+    // A cleanup that fails does not block the update.
+    QuitHooks.length = 0;
+    Manager.SetBeforeQuitForUpdate(() => Promise.reject(new Error('disk gone')));
+    process.execPath = path.join(Root, 'app-2.0.0', 'ShowTrak Timers.exe');
+    const Failed = withPlatform('win32', () => handlers['AppUpdate:Install']());
+    process.execPath = ExecPath;
+    await Failed;
+    assert.deepEqual(QuitHooks, ['quitAndInstall']);
   } finally {
     process.execPath = ExecPath;
     appState.isPackaged = WasPackaged;

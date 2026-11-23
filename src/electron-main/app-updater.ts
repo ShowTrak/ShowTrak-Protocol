@@ -81,9 +81,12 @@ export interface AppUpdaterManager {
    * What to run just before an install quits the app: lets that quit past the
    * app's shutdown guard. Electron's Windows updater never emits
    * 'before-quit-for-update' (macOS's does), so the Squirrel install calls this
-   * itself before it quits.
+   * itself before it quits. If the hook returns a promise, the Squirrel install
+   * waits for it (up to BEFORE_QUIT_FOR_UPDATE_TIMEOUT_MS) before handing over:
+   * the installer starts the new version straight away, so the app's own
+   * cleanup (closing its database) has to be finished by then.
    */
-  SetBeforeQuitForUpdate(Hook: () => void): void;
+  SetBeforeQuitForUpdate(Hook: () => void | Promise<void>): void;
   /** Record a status and push it to the renderer. */
   sendAppUpdateStatus(payload: AppUpdateStatus): void;
   /** Whether this is a Squirrel-installed Windows build (Update.exe beside it). */
@@ -122,6 +125,10 @@ function toErrorMessage(value: unknown): string {
   if (value instanceof Error) return value.message || String(value);
   return String(value);
 }
+
+// How long a Squirrel install waits for the app's before-quit-for-update hook.
+// A backstop only: the app bounds its own cleanup well inside this.
+export const BEFORE_QUIT_FOR_UPDATE_TIMEOUT_MS = 45_000;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -266,7 +273,7 @@ export function CreateAppUpdater(Options: AppUpdaterOptions): AppUpdaterManager 
   let autoCheckIntervalTimer: NodeJS.Timeout | null = null;
   // Set while an install is under way, so a second click does not start another.
   let installInFlight = false;
-  let beforeQuitForUpdate: () => void = () => undefined;
+  let beforeQuitForUpdate: () => void | Promise<void> = () => undefined;
 
   const githubHeaders = () => ({
     Accept: 'application/vnd.github+json',
@@ -759,7 +766,16 @@ export function CreateAppUpdater(Options: AppUpdaterOptions): AppUpdaterManager 
       try {
         Logger.log('Using Squirrel updater install flow');
         sendAppUpdateStatus({ state: 'installing' });
-        beforeQuitForUpdate();
+        try {
+          await withTimeout(
+            Promise.resolve(beforeQuitForUpdate()),
+            BEFORE_QUIT_FOR_UPDATE_TIMEOUT_MS,
+            'Preparing to quit for the update'
+          );
+        } catch (e) {
+          // Install anyway: a cleanup that failed or hangs must not block the update.
+          Logger.error('Preparing to quit for the update failed:', e);
+        }
         SquirrelUpdater.quitAndInstall();
       } catch (e) {
         sendAppUpdateStatus({ state: 'error', error: String(e) });
