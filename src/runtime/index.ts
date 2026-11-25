@@ -22,3 +22,4 @@ export * from './app-logger';
 export * from './update-channel';
 export * from './process-guards';
 export * from './files';
+export * from './script-launch';
